@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 
     tempstring << filecounter;
 
-    statsfilename += "3DDK_run";
+    statsfilename += "phase_run";
     statsfilename += tempstring.str();
 
     testoutstats.open(statsfilename.c_str());
