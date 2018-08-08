@@ -1,6 +1,6 @@
 # 3D-flat-two-species
 
-Simulating a two-species competition model with a flat 3D frontier.
+Simulating a two-species competition model with a flat 3D hexagonal frontier.
 
 # simulation.cc:
 Performs a single run simulation of the population growth and prints the coordinates of cells (x,y,z) and the strain of the cells (1 or 2) to an output file named "simulation_runXX"
