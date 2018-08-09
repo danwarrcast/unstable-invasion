@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 
     tempstring << filecounter;
 
-    statsfilename += "DKmu_run";
+    statsfilename += "mu_run";
     statsfilename += tempstring.str();
 
     testoutstats.open(statsfilename.c_str());
