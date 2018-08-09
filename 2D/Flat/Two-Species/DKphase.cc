@@ -8,23 +8,6 @@
 using namespace std;
 
 using boost::mt19937;
-using boost::uniform_01;
-
-// calls uniform random number between 0 and 1
-double random01(mt19937 generator)
-{
-  static uniform_01<mt19937> dist(generator);
-  return dist();
-}
-
-int rbetween(mt19937 generator, int min, int max)
-{
-
-  if (min == max) return min;
-
-  return floor(random01(generator)*(1+max-min)+min);
-
-}
 
 int rownd (double a) {
         return(int(a+ 0.5));
@@ -40,17 +23,10 @@ int mod(int a, int b)
 double prob(int m1, int m2, double s)
 {
   double g1, g2, result;
-  if (m1 == 1) {
-    g1 = 1;
-  } else if (m1 == 2) {
-    g1 = 1-s;
-  }
-  if (m2 == 1) {
-    g2 = 1;
-  } else if (m2 == 2) {
-    g2 = 1-s;
-  }
- 
+  
+  g1 = 1.0 - s*(m1-1);
+  g2 = 1.0 - s*(m2-1);
+
   result = g1 / (g1 + g2);
 
   return result;
@@ -60,6 +36,7 @@ int main(int argc, char* argv[])
 {
   int lattsize, nogen, numruns, numslices;
   double mu, sel, delta_s, delta_mu;
+  double rannum1, rannum2;
 
   string statsfilename;  
   ofstream outstats;
@@ -77,8 +54,10 @@ int main(int argc, char* argv[])
   int root = 0;
 
   int seed = time(0)+rownd(double(rank)*double(time(0))/double(size));
-
+	
   mt19937 generator(seed);
+  boost::random::uniform_real_distribution< double > dis(0,1);
+  boost::random::uniform_int_distribution< int > disi(1,2);
 
   if (rank == 0)
   {
@@ -89,7 +68,7 @@ int main(int argc, char* argv[])
 
     tempstring << filecounter;
 
-    statsfilename += "DKphase_run";
+    statsfilename += "phase_run";
     statsfilename += tempstring.str();
 
     testoutstats.open(statsfilename.c_str());
@@ -163,8 +142,9 @@ int main(int argc, char* argv[])
       for (int i = 0; i < lattsize; i++) {
         if (mu > 0.0000000001) {
           latteven[i] = 1;
-        } else {
-          latteven[i] = rbetween(generator,1,2);
+        } else {]
+	  rannum1 = disi(generator)
+          latteven[i] = rannum1;
 	}
       }
 
@@ -179,7 +159,8 @@ int main(int argc, char* argv[])
             lattodd[i] = latteven[i];
           } else {
             ++dwnum;
-            if (random01(generator) < prob(latteven[i],latteven[mod(i-1,lattsize)],sel)) {
+	    rannum1 = dis(generator);
+            if (rannum1 < prob(latteven[i],latteven[mod(i-1,lattsize)],sel)) {
               lattodd[i] = latteven[i];
             } else {
               lattodd[i] = latteven[mod(i-1,lattsize)];
@@ -187,7 +168,8 @@ int main(int argc, char* argv[])
           }
           if (lattodd[i] == 1) {
             if (mu > 0.0000000001) {
-              if (random01(generator) < mu) lattodd[i]++;
+	      rannum2 = dis(generator);
+              if (rannum2 < mu) lattodd[i]++;
             }
           }
         }
@@ -201,7 +183,8 @@ int main(int argc, char* argv[])
             latteven[i] = lattodd[i];
           } else {
             ++dwnum;
-            if (random01(generator) < prob(lattodd[i],lattodd[mod(i+1,lattsize)],sel)) {
+	    rannum1 = dis(generator);
+            if (rannum1 < prob(lattodd[i],lattodd[mod(i+1,lattsize)],sel)) {
               latteven[i] = lattodd[i];
             } else {
               latteven[i] = lattodd[mod(i+1,lattsize)];
@@ -209,7 +192,8 @@ int main(int argc, char* argv[])
           }
           if (latteven[i] == 1) {
             if (mu > 0.0000000001) {
-              if (random01(generator) < mu) latteven[i]++;
+	      rannum2 = dis(generator);
+              if (rannum2 < mu) latteven[i]++;
             }
           }
         }
