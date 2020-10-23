@@ -292,14 +292,15 @@ int main(int argc, char *argv[])
 
       //choose a random lattice site to update from the list of active sites
       rannum1 = dis(generator);
-      active_rand = chooseactive(active, aMeta, rannum1, sG, sW);
+      active_rand = round(rannum1*(aMeta[0]-1));
+      //active_rand = chooseactive(active, aMeta, rannum1, sG, sW);
       i_rand = active[active_rand][0];
       j_rand = active[active_rand][1];
       int a, b, c, d, e, f, g;
       int lxindex = mod(i_rand - 1, lattsize);
       int rxindex = mod(i_rand + 1, lattsize);
-      int uyindex = mod(j_rand - 1, lattsize);
-      int dyindex = mod(j_rand + 1, lattsize);
+      int uyindex = mod(j_rand + 1, lattsize2);
+      int dyindex = mod(j_rand - 1, lattsize2);
       if (j_rand % 2 == 0)
       {
         //find neighbors of the chosen site if j-index is even
@@ -366,7 +367,7 @@ int main(int argc, char *argv[])
                  {rxindex, uyindex, d},
                  {i_rand, dyindex, e},
                  {rxindex, dyindex, f},
-                 {i_rand, j_rand, latt[i_rand][j_rand][0]}};
+                 {i_rand, j_rand, winner}};
         }
         else
         {
@@ -377,7 +378,7 @@ int main(int argc, char *argv[])
                  {lxindex, uyindex, d},
                  {i_rand, dyindex, e},
                  {lxindex, dyindex, f},
-                 {i_rand, j_rand, latt[i_rand][j_rand][0]}};
+                 {i_rand, j_rand, winner}};
         }
         for (auto &vec : tmp)
         {
@@ -388,8 +389,8 @@ int main(int argc, char *argv[])
           int ta, tb, tc, td, te, tf;
           int n_lxindex = mod(new_i - 1, lattsize);
           int n_rxindex = mod(new_i + 1, lattsize);
-          int n_uyindex = mod(new_j - 1, lattsize);
-          int n_dyindex = mod(new_j + 1, lattsize);
+          int n_uyindex = mod(new_j + 1, lattsize2);
+          int n_dyindex = mod(new_j - 1, lattsize2);
           if (new_j % 2 == 0)
           {
             //find nearest neighbors of site (new_i,new_j) if new_j is even

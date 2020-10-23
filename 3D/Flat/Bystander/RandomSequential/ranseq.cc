@@ -18,30 +18,38 @@
 using namespace std;
 
 using boost::mt19937;
-using boost::random::uniform_real_distribution;
 using boost::random::uniform_int_distribution;
+using boost::random::uniform_real_distribution;
 
-int rownd (double a) {
-        return(int(a+ 0.5));
+int rownd(double a)
+{
+  return (int(a + 0.5));
 }
 
-bool to_bool(std::string str) {
-    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-    std::istringstream is(str);
-    bool b;
-    is >> std::boolalpha >> b;
-    return b;
+bool to_bool(std::string str)
+{
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+  std::istringstream is(str);
+  bool b;
+  is >> std::boolalpha >> b;
+  return b;
 }
 
 // determine winner of cell competition
-int winstrain(int a, int b, int c, int d, int e, int f, vector < vector < vector < vector < vector < vector < vector < double > > > > > > > &gammas, double rannum) {
+int winstrain(int a, int b, int c, int d, int e, int f, vector<vector<vector<vector<vector<vector<vector<double>>>>>>> &gammas, double rannum)
+{
 
   double G = 0.0;
   int winner;
 
-  for (int s = 0; s < 4; s++) {
+  for (int s = 1; s < 4; s++)
+  {
     G += gammas[a][b][c][d][e][f][s];
-    if (G >= rannum) { winner = s; break; }
+    if (G >= rannum)
+    {
+      winner = s;
+      break;
+    }
   }
   return winner;
 }
@@ -49,60 +57,71 @@ int winstrain(int a, int b, int c, int d, int e, int f, vector < vector < vector
 // calls a%b with the result always positive
 int mod(int a, int b)
 {
-  int r = (a%b+b)%b;
+  int r = (a % b + b) % b;
   return r;
 }
 
-int chooseactive(vector< vector < int > > &alist, vector< int > &aM, double rN, double sG, double sW) {
+int chooseactive(vector<vector<int>> &alist, vector<int> &aM, double rN, double sG, double sW)
+{
   int index;
   double sum = 0;
-  double denom = (1.0-sG)*aM[1] + aM[2] + (1.0-sW)*aM[3];
-  vector < double > sums = {0, (1.0-sG)/denom, 1.0/denom, (1.0-sW)/denom};
-  for (int i = 0; i < aM[0]; i++) {
+  double denom = (1.0 - sG) * aM[1] + aM[2] + (1.0 - sW) * aM[3];
+  vector<double> sums = {0, (1.0 - sG) / denom, 1.0 / denom, (1.0 - sW) / denom};
+  for (int i = 0; i < aM[0]; i++)
+  {
     sum += sums[alist[i][2]];
-    if (sum >= rN) {
+    if (sum >= rN)
+    {
       index = i;
       break;
     }
   }
-  if (sum < rN) cout << "Loop is over and sum is only " << sum << " so I send index " << index << endl;
+  if (sum < rN)
+    cout << "Loop is over and sum is only " << sum << " so I send index " << index << endl;
   return index;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
   int lattsize, nogen, numruns;
   double mu, sG, sW;
   double rannum1, rannum2;
   bool image;
 
-  string statsfilename;  
+  string statsfilename;
   ofstream outstats, outstats2, outstats3;
   ifstream testoutstats;
-  int filecounter=0;
+  int filecounter = 0;
   string tempstr;
 
-  ostringstream tempstring;	
+  ostringstream tempstring;
 
   MPI::Init(argc, argv);
   int rank = MPI::COMM_WORLD.Get_rank();
   int size = MPI::COMM_WORLD.Get_size();
   int root = 0;
 
-  int seed = time(0)+rownd(double(rank)*double(time(0))/double(size));
+  int seed = time(0) + rownd(double(rank) * double(time(0)) / double(size));
 
-  if (rank == 0) {
+  if (rank == 0)
+  {
 
-      lattsize = atoi(argv[4]);
-      nogen = atoi(argv[5]);
-      numruns = atoi(argv[6]);
-      sW = atof(argv[1]);
-      sG = sW - atof(argv[2]);
-      mu = atof(argv[3]);
+    lattsize = atoi(argv[4]);
+    nogen = atoi(argv[5]);
+    numruns = atoi(argv[6]);
+    sW = atof(argv[1]);
+    sG = sW - atof(argv[2]);
+    mu = atof(argv[3]);
+    image = false;
+
+    if (argc == 8 && to_bool(argv[7]))
+    {
+      image = true;
+    }
+    else if (argc == 8 && !to_bool(argv[7]))
+    {
       image = false;
-
-    if (argc == 8 && to_bool(argv[7])) { image = true; }
-    else if (argc == 8 && !to_bool(argv[7])) { image = false; }
+    }
 
     statsfilename += "diffusion_out/man/ranseq";
 
@@ -117,11 +136,11 @@ int main(int argc, char* argv[])
 
     testoutstats.open(statsfilename.c_str());
     testoutstats.close();
-	
+
     while (!testoutstats.fail())
     {
       tempstr = tempstring.str();
-      statsfilename.erase(statsfilename.end()-tempstr.size(),statsfilename.end());
+      statsfilename.erase(statsfilename.end() - tempstr.size(), statsfilename.end());
       filecounter++;
       tempstring.str("");
       tempstring.clear();
@@ -147,7 +166,8 @@ int main(int argc, char* argv[])
 
     cout << statsfilename.c_str() << endl;
 
-    if (image) {
+    if (image)
+    {
       statsfilename = "diffusion_out/man/ranseq_image";
 
       tempstring.str("");
@@ -160,7 +180,7 @@ int main(int argc, char* argv[])
       cout << statsfilename.c_str() << endl;
     }
   }
-  
+
   MPI::COMM_WORLD.Barrier();
 
   MPI::COMM_WORLD.Bcast(&filecounter, 1, MPI::INT, root);
@@ -171,33 +191,45 @@ int main(int argc, char* argv[])
   MPI::COMM_WORLD.Bcast(&sG, 1, MPI::DOUBLE, root);
   MPI::COMM_WORLD.Bcast(&mu, 1, MPI::DOUBLE, root);
 
-  if (rank == 0) {
+  if (rank == 0)
+  {
     cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " N_procs: " << size << " Has_Image: " << image << endl;
-    cout << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu <<  endl;
+    cout << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
 
     outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " N_procs: " << size << " Has_Image: " << image << endl;
-    outstats << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu <<  endl;
+    outstats << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
   }
 
-  int lattsize2 = lattsize*4;
-  
-  mt19937 generator(seed);
-  boost::random::uniform_real_distribution< double > dis(0,1);
+  int lattsize2 = lattsize * 4;
 
-    // calculate all gamma factors for competition
-  vector< vector< vector< vector< vector< vector< vector< double> > > > > > > gammas(4, vector< vector< vector< vector< vector< vector< double > > > > > >(4, vector< vector< vector< vector< vector< double > > > > >(4, vector< vector< vector< vector< double > > > >(4, vector< vector< vector< double > > >(4, vector< vector< double > >(4, vector< double >(4)))))));
-  for (int i = 1; i <= 3; i++) {
-    for (int j = 1; j <= 3; j++) {
-      for (int k = 1; k <= 3; k++) {
-        for (int l = 1; l <= 3; l++) {
-          for (int m = 1; m <= 3; m++) {
-            for (int n = 1; n <= 3; n++) {
-              vector< int > tmp = {0,0,0,0};
-              tmp[i]++; tmp[j]++; tmp[k]++; tmp[l]++; tmp[m]++; tmp[n]++;
-              double Denom = (1.0-sG)*(double)tmp[1] + (double)tmp[2] + (1.0-sW)*(double)tmp[3];
-              gammas[i][j][k][l][m][n][1] = (1.0-sG)*(double)tmp[1]/Denom;
-              gammas[i][j][k][l][m][n][2] = (double)tmp[2]/Denom;
-              gammas[i][j][k][l][m][n][3] = (1.0-sW)*(double)tmp[3]/Denom;
+  mt19937 generator(seed);
+  boost::random::uniform_real_distribution<double> dis(0, 1);
+
+  // calculate all gamma factors for competition
+  vector<vector<vector<vector<vector<vector<vector<double>>>>>>> gammas(4, vector<vector<vector<vector<vector<vector<double>>>>>>(4, vector<vector<vector<vector<vector<double>>>>>(4, vector<vector<vector<vector<double>>>>(4, vector<vector<vector<double>>>(4, vector<vector<double>>(4, vector<double>(4)))))));
+  for (int i = 1; i <= 3; i++)
+  {
+    for (int j = 1; j <= 3; j++)
+    {
+      for (int k = 1; k <= 3; k++)
+      {
+        for (int l = 1; l <= 3; l++)
+        {
+          for (int m = 1; m <= 3; m++)
+          {
+            for (int n = 1; n <= 3; n++)
+            {
+              vector<int> tmp = {0, 0, 0, 0};
+              tmp[i]++;
+              tmp[j]++;
+              tmp[k]++;
+              tmp[l]++;
+              tmp[m]++;
+              tmp[n]++;
+              double Denom = (1.0 - sG) * (double)tmp[1] + (double)tmp[2] + (1.0 - sW) * (double)tmp[3];
+              gammas[i][j][k][l][m][n][1] = (1.0 - sG) * (double)tmp[1] / Denom;
+              gammas[i][j][k][l][m][n][2] = (double)tmp[2] / Denom;
+              gammas[i][j][k][l][m][n][3] = (1.0 - sW) * (double)tmp[3] / Denom;
             }
           }
         }
@@ -209,45 +241,53 @@ int main(int argc, char* argv[])
   int t2;
   int nogen2 = ceil(log2(nogen));
 
-  int left = (lattsize2)/2 - lattsize/4, right = (lattsize2)/2 + lattsize/4;
-  vector< vector< int > >::iterator Lit;
-  vector< vector< int > >::reverse_iterator Rit;
+  int left = (lattsize2) / 2 - lattsize / 4, right = (lattsize2) / 2 + lattsize / 4;
+  vector<vector<int>>::iterator Lit;
+  vector<vector<int>>::reverse_iterator Rit;
   int Lmax, Rmax, LInt, RInt, i_rand, j_rand, active_rand;
   double dt;
 
-  char* _emergencyMemory = new char[16384];
-  try { 
-    vector< double > results(numruns*(nogen2+1)*lattsize*6);
-    vector< vector< vector< int > > > latt(lattsize, vector< vector< int > > (lattsize2, vector< int > (3)));
-    vector< vector< int > > active(lattsize*lattsize2, vector< int >(3));
-    vector< int > aMeta(4);
-  } catch(bad_alloc& ex) {
+  char *_emergencyMemory = new char[16384];
+  try
+  {
+    vector<double> results(numruns * (nogen2 + 1) * lattsize * 6);
+    vector<vector<vector<int>>> latt(lattsize, vector<vector<int>>(lattsize2, vector<int>(3)));
+    vector<vector<int>> active(lattsize * lattsize2, vector<int>(3));
+    vector<int> aMeta(4);
+  }
+  catch (bad_alloc &ex)
+  {
     delete[] _emergencyMemory;
     cerr << "Not enough memory!" << endl;
     cin.get();
     exit(1);
   }
-  vector< double > results(numruns*(nogen2+1)*lattsize*6);
-  vector< vector< vector< int > > > latt(lattsize, vector< vector< int > > (lattsize2, vector< int > (3)));
-  vector< vector< int > > active(lattsize*lattsize2, vector < int >(3));
-  vector< int > aMeta(4);
+  vector<double> results(numruns * (nogen2 + 1) * lattsize * 6);
+  vector<vector<vector<int>>> latt(lattsize, vector<vector<int>>(lattsize2, vector<int>(3)));
+  vector<vector<int>> active(lattsize * lattsize2, vector<int>(3));
+  vector<int> aMeta(4);
 
-  for (int q = 0; q < numruns; q++) {  
+  for (int q = 0; q < numruns; q++)
+  {
 
-    int currindexq = q*(nogen2+1)*lattsize*6;
+    int currindexq = q * (nogen2 + 1) * lattsize * 6;
     aMeta.clear();
     // initialize lattice
-    for (int i = 0; i < lattsize; i++) {
-      for (int j = 0; j < lattsize2; j++) {
+    for (int i = 0; i < lattsize; i++)
+    {
+      for (int j = 0; j < lattsize2; j++)
+      {
         latt[i][j][0] = 1;
         latt[i][j][1] = 0;
         latt[i][j][2] = 0;
-        if (j > left && j <= right) {
+        if (j > left && j <= right)
+        {
           latt[i][j][0] = 2;
         }
         int m = latt[i][j][0];
-        if (j == left || j == left+1 || j == right || j == right+1) {
-          active[aMeta[0]] = {i,j,m};
+        if (j == left || j == left + 1 || j == right || j == right + 1)
+        {
+          active[aMeta[0]] = {i, j, m};
           latt[i][j][1] = 1;
           latt[i][j][2] = aMeta[0];
           aMeta[0]++;
@@ -258,27 +298,34 @@ int main(int argc, char* argv[])
 
     t2 = 0;
     double t = 0.0;
-    while (t <= pow(2,nogen2)+1) {
-   
-      if (t > 0.0 && log2(t) >= t2) {
+    while (t <= pow(2, nogen2) + 1)
+    {
+
+      if (t > 0.0 && log2(t) >= t2)
+      {
         pow_2 = true;
-      } else {
+      }
+      else
+      {
         pow_2 = false;
       }
 
-      if (aMeta[0] != aMeta[1]+aMeta[2]+aMeta[3]) cout << "Something wrong with aMeta: (" << aMeta[0] << "," << aMeta[1] << "," << aMeta[2] << "," << aMeta[3] << ")" << endl;
-      
+      if (aMeta[0] != aMeta[1] + aMeta[2] + aMeta[3])
+        cout << "Something wrong with aMeta: (" << aMeta[0] << "," << aMeta[1] << "," << aMeta[2] << "," << aMeta[3] << ")" << endl;
+
       //choose a random lattice site to update from the list of active sites
       rannum1 = dis(generator);
-      active_rand = chooseactive(active, aMeta, rannum1, sG, sW);
+      active_rand = round(rannum1*(aMeta[0]-1));
+      //active_rand = chooseactive(active, aMeta, rannum1, sG, sW);
       i_rand = active[active_rand][0];
       j_rand = active[active_rand][1];
-      int a,b,c,d,e,f,g;
-      int lxindex = mod(i_rand-1,lattsize);
-      int rxindex = mod(i_rand+1,lattsize);
-      int uyindex = mod(j_rand-1,lattsize);
-      int dyindex = mod(j_rand+1,lattsize);
-      if ( j_rand % 2 == 0) {
+      int a, b, c, d, e, f, g;
+      int lxindex = mod(i_rand - 1, lattsize);
+      int rxindex = mod(i_rand + 1, lattsize);
+      int uyindex = mod(j_rand + 1, lattsize2);
+      int dyindex = mod(j_rand - 1, lattsize2);
+      if (j_rand % 2 == 0)
+      {
         //find neighbors of the chosen site if j-index is even
         a = latt[lxindex][j_rand][0];
         b = latt[rxindex][j_rand][0];
@@ -287,7 +334,9 @@ int main(int argc, char* argv[])
         e = latt[i_rand][dyindex][0];
         f = latt[rxindex][dyindex][0];
         g = latt[i_rand][j_rand][0];
-      } else {
+      }
+      else
+      {
         //find neighbors of the chosen site if j-index is odd
         a = latt[lxindex][j_rand][0];
         b = latt[rxindex][j_rand][0];
@@ -298,57 +347,75 @@ int main(int argc, char* argv[])
         g = latt[i_rand][j_rand][0];
       }
       int winner = 0;
-      if ( a == b && b == c && c == d && d == e && e == f ) {
+      if (a == b && b == c && c == d && d == e && e == f)
+      {
         //if all the neighbors of the chosen site have the same identity, don't pull a random number; replace active site with identity of the neighbors
-        if ( a != g ) { winner = a; } else { winner = g; }
-      } else {
+        if (a != g)
+        {
+          winner = a;
+        }
+        else
+        {
+          winner = g;
+        }
+      }
+      else
+      {
         //if the neighbors of the chosen cell have different identities, pull a random number and decide the winner to replace the active site
         rannum1 = dis(generator);
         winner = winstrain(a, b, c, d, e, f, gammas, rannum1);
       }
-      if (winner == 2 && mu > 0.0000000001) {
+      if (winner == 2 && mu > 0.0000000001)
+      {
         //if mutation rate is non-zero, check for a mutation event
         rannum2 = dis(generator);
-        if (rannum2 < mu) winner = 3;
+        if (rannum2 < mu)
+          winner = 3;
       }
-      if (winner != g) {
+      if (winner != g)
+      {
         //if the lattice has changed, update the lattice and active list meta data
         latt[i_rand][j_rand][0] = winner;
         active[active_rand][2] = winner;
         --aMeta[g];
         ++aMeta[winner];
         //if the lattice has changed during the last update, update active list
-        vector < vector < int > > tmp(7, vector < int >(3));
-        if (j_rand % 2 == 0) {
+        vector<vector<int>> tmp(7, vector<int>(3));
+        if (j_rand % 2 == 0)
+        {
           //find neighbors if j-index for current updated cell is even
-          tmp = {{lxindex,j_rand,a},
-                 {rxindex,j_rand,b},
-                 {i_rand,uyindex,c},
-                 {rxindex,uyindex,d},
-                 {i_rand,dyindex,e},
-                 {rxindex,dyindex,f},
-                 {i_rand,j_rand,latt[i_rand][j_rand][0]}};
-        } else {
-          //find neighbors if j-index for current updated cell is odd
-          tmp = {{lxindex,j_rand,a},
-                 {rxindex,j_rand,b},
-                 {i_rand,uyindex,c},
-                 {lxindex,uyindex,d},
-                 {i_rand,dyindex,e},
-                 {lxindex,dyindex,f},
-                 {i_rand,j_rand,latt[i_rand][j_rand][0]}};
+          tmp = {{lxindex, j_rand, a},
+                 {rxindex, j_rand, b},
+                 {i_rand, uyindex, c},
+                 {rxindex, uyindex, d},
+                 {i_rand, dyindex, e},
+                 {rxindex, dyindex, f},
+                 {i_rand, j_rand, latt[i_rand][j_rand][0]}};
         }
-        for (auto &vec : tmp) {
+        else
+        {
+          //find neighbors if j-index for current updated cell is odd
+          tmp = {{lxindex, j_rand, a},
+                 {rxindex, j_rand, b},
+                 {i_rand, uyindex, c},
+                 {lxindex, uyindex, d},
+                 {i_rand, dyindex, e},
+                 {lxindex, dyindex, f},
+                 {i_rand, j_rand, latt[i_rand][j_rand][0]}};
+        }
+        for (auto &vec : tmp)
+        {
           //for each of the neighbors of the updated cell (including updated cell), check if that cell is now active or inactive
           int new_i = vec[0], new_j = vec[1], new_m = vec[2];
           int in_active = latt[new_i][new_j][1];
           int index = latt[new_i][new_j][2];
           int ta, tb, tc, td, te, tf;
-          int n_lxindex = mod(new_i-1,lattsize);
-          int n_rxindex = mod(new_i+1,lattsize);
-          int n_uyindex = mod(new_j-1,lattsize);
-          int n_dyindex = mod(new_j+1,lattsize);
-          if (new_j % 2 == 0) {
+          int n_lxindex = mod(new_i - 1, lattsize);
+          int n_rxindex = mod(new_i + 1, lattsize);
+          int n_uyindex = mod(new_j + 1, lattsize2);
+          int n_dyindex = mod(new_j - 1, lattsize2);
+          if (new_j % 2 == 0)
+          {
             //find nearest neighbors of site (new_i,new_j) if new_j is even
             ta = latt[n_lxindex][new_j][0];
             tb = latt[n_rxindex][new_j][0];
@@ -356,7 +423,9 @@ int main(int argc, char* argv[])
             td = latt[n_rxindex][n_uyindex][0];
             te = latt[new_i][n_dyindex][0];
             tf = latt[n_rxindex][n_dyindex][0];
-          } else { 
+          }
+          else
+          {
             //find nearest neighbors of site (new_i,new_j) if new_j is odd
             ta = latt[n_lxindex][new_j][0];
             tb = latt[n_rxindex][new_j][0];
@@ -366,19 +435,24 @@ int main(int argc, char* argv[])
             tf = latt[n_lxindex][n_dyindex][0];
           }
           //check if current site is in the active list
-          if (in_active == 1) {
+          if (in_active == 1)
+          {
             //if current site is in the active list, check if it *should* be in the active list
-            if ( new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf) {
+            if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
+            {
               //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
-              active[index] = active[aMeta[0]-1];
+              active[index] = active[aMeta[0] - 1];
               latt[active[index][0]][active[index][1]][2] = index;
               latt[new_i][new_j][1] = 0;
-              latt[new_i][new_j][2] = active.size()+1;
+              latt[new_i][new_j][2] = active.size() + 1;
               --aMeta[0];
               --aMeta[new_m];
             }
-          } else if (in_active == 0) {
-            if (new_m != ta || new_m != tb || new_m != tc || new_m != td || new_m != te || new_m != tf) {
+          }
+          else if (in_active == 0)
+          {
+            if (new_m != ta || new_m != tb || new_m != tc || new_m != td || new_m != te || new_m != tf)
+            {
               //if current lattice site is not in the active list and has at least one neighbor with a different identity, add it to active list
               active[aMeta[0]] = {new_i, new_j, new_m};
               latt[new_i][new_j][1] = 1;
@@ -390,87 +464,111 @@ int main(int argc, char* argv[])
         }
       }
 
-      if (pow_2) {
+      if (pow_2)
+      {
 
-        int currindexqt2 = currindexq + t2*lattsize*6;
-        if (rank == 0) cout << rank << ": (q,t2,t) = (" << q << "," << t2 << "," << t << "); aSize = " << aMeta[0] << endl;
+        int currindexqt2 = currindexq + t2 * lattsize * 6;
+        if (rank == 0)
+          cout << rank << ": (q,t2,t) = (" << q << "," << t2 << "," << t << "); aSize = " << aMeta[0] << endl;
 
-        for (int i = 0; i < lattsize; i++) {
+        for (int i = 0; i < lattsize; i++)
+        {
 
           //Find first and last elements in current column of the lattice with value >1
-          for (auto it = latt[i].begin(); it != latt[i].end(); ++it) {
-            if ((*it)[0] > 1) {
+          for (auto it = latt[i].begin(); it != latt[i].end(); ++it)
+          {
+            if ((*it)[0] > 1)
+            {
               Lit = it;
               break;
             }
           }
-          for (auto it = latt[i].rbegin(); it != latt[i].rend(); it++) {
-            if ((*it)[0] > 1) {
+          for (auto it = latt[i].rbegin(); it != latt[i].rend(); it++)
+          {
+            if ((*it)[0] > 1)
+            {
               Rit = it;
               break;
             }
           }
           //The first and last elements in the current column with value >1 will act as our maximum range for this column
           //since the the identity for j<Lmax and j>Ramax must be 1
-          Lmax = distance(latt[i].begin(),Lit);
-          Rmax = distance(latt[i].begin(),(Rit+1).base());
+          Lmax = distance(latt[i].begin(), Lit);
+          Rmax = distance(latt[i].begin(), (Rit + 1).base());
 
-          std::vector< int > Lmatches;
-          std::vector< int > Rmatches;
+          std::vector<int> Lmatches;
+          std::vector<int> Rmatches;
           //Find all green cells (M = 1) within the range Lmax < j < Rmax and add these cells to the vector Lmatches or Rmatches
           //depending on which side of the lattice the green cell is on
-          for (auto j = Lit, toofar = (Rit+1).base()+1; j != toofar; ++j) {
-            if ( (*j)[0] == 1 && distance(latt[i].begin(),j) < lattsize2/2 ) Lmatches.push_back(distance(latt[i].begin(),j));
-              if ( (*j)[0] == 1 && distance(latt[i].begin(),j) > lattsize2/2 ) Rmatches.push_back(distance(latt[i].begin(),j));
+          for (auto j = Lit, toofar = (Rit + 1).base() + 1; j != toofar; ++j)
+          {
+            if ((*j)[0] == 1 && distance(latt[i].begin(), j) < lattsize2 / 2)
+              Lmatches.push_back(distance(latt[i].begin(), j));
+            if ((*j)[0] == 1 && distance(latt[i].begin(), j) > lattsize2 / 2)
+              Rmatches.push_back(distance(latt[i].begin(), j));
           }
 
           double Lavg = 0, Ravg = 0;
           //average the j-indices of the green cells for each column to determine the average "position" of the boundary in this column
-          if (Lmatches.size() > 0) {
+          if (Lmatches.size() > 0)
+          {
             LInt = Lmatches[Lmatches.size() - 1] - Lmax;
-            Lavg = (Lmax - 1.0)/( (double)Lmatches.size() + 1.0 );
-            for (auto k = Lmatches.begin(); k != Lmatches.end(); ++k) {
-              Lavg += *k/( (double)Lmatches.size() + 1.0 );
+            Lavg = (Lmax - 1.0) / ((double)Lmatches.size() + 1.0);
+            for (auto k = Lmatches.begin(); k != Lmatches.end(); ++k)
+            {
+              Lavg += *k / ((double)Lmatches.size() + 1.0);
             }
-            if (Lavg < 0.000001) Lavg = Lmax;
-          } else {
+            if (Lavg < 0.000001)
+              Lavg = Lmax;
+          }
+          else
+          {
             Lavg = Lmax;
             LInt = 0;
           }
-          if (Rmatches.size() > 0) {
+          if (Rmatches.size() > 0)
+          {
             RInt = Rmax - Rmatches[0];
-            Ravg = (Rmax + 1.0)/( (double)Rmatches.size() + 1.0 );
-            for (auto k = Rmatches.begin(); k != Rmatches.end(); ++k) {
-              Ravg += *k/( (double)Rmatches.size() + 1.0 );
+            Ravg = (Rmax + 1.0) / ((double)Rmatches.size() + 1.0);
+            for (auto k = Rmatches.begin(); k != Rmatches.end(); ++k)
+            {
+              Ravg += *k / ((double)Rmatches.size() + 1.0);
             }
-            if (Ravg < 0.000001) Ravg = Rmax;
-          } else {
+            if (Ravg < 0.000001)
+              Ravg = Rmax;
+          }
+          else
+          {
             Ravg = Rmax;
             RInt = 0;
           }
-          int currindex = currindexqt2+i*6;
-          results[currindex+0] = Lavg;
-          results[currindex+1] = Ravg;
-          results[currindex+2] = Lmax;
-          results[currindex+3] = Rmax;
-          results[currindex+4] = LInt;
-          results[currindex+5] = RInt;
+          int currindex = currindexqt2 + i * 6;
+          results[currindex + 0] = Lavg;
+          results[currindex + 1] = Ravg;
+          results[currindex + 2] = Lmax;
+          results[currindex + 3] = Rmax;
+          results[currindex + 4] = LInt;
+          results[currindex + 5] = RInt;
         }
         pow_2 = false;
         t2++;
       }
       //Advance the time according to Gillespie's algorithm
-      dt = -log(1.0 - dis(generator))/(double)aMeta[0];
+      dt = -log(1.0 - dis(generator)) / (double)aMeta[0];
       t = t + dt;
     }
   }
 
-  if (rank == 0 && image) {
-    for (auto it = latt.begin(); it != latt.end(); ++it) {
-      for (auto jt = (*it).begin(); jt != (*it).end(); ++jt) {
-        double x = (double)distance(latt.begin(), it)-0.5*mod(distance((*it).begin(), jt),2);
-        double y = (double)distance((*it).begin(), jt)*sqrt(3)/2;
-        if ((*jt)[0] > 1) outstats3 << t2 << "\t" << x << "\t" << y << "\t" <<  (*jt)[0] << "\t" << (*jt)[1] << endl;
+  if (rank == 0 && image)
+  {
+    for (auto it = latt.begin(); it != latt.end(); ++it)
+    {
+      for (auto jt = (*it).begin(); jt != (*it).end(); ++jt)
+      {
+        double x = (double)distance(latt.begin(), it) - 0.5 * mod(distance((*it).begin(), jt), 2);
+        double y = (double)distance((*it).begin(), jt) * sqrt(3) / 2;
+        if ((*jt)[0] > 1)
+          outstats3 << t2 << "\t" << x << "\t" << y << "\t" << (*jt)[0] << "\t" << (*jt)[1] << endl;
       }
     }
     outstats3.close();
@@ -478,69 +576,83 @@ int main(int argc, char* argv[])
 
   //delete latt and active vectors to clear memory for new vectors for analysis
   latt.clear();
-  vector< vector< vector< int > > >().swap(latt);
+  vector<vector<vector<int>>>().swap(latt);
   active.clear();
-  vector< vector< int > >().swap(active);
+  vector<vector<int>>().swap(active);
 
-  vector< vector< vector< double > > > avgs(numruns, vector< vector< double > > (nogen2+1, vector< double > (6)));
-  vector< vector< vector< double > > > avgs2(numruns, vector< vector< double > > (nogen2+1, vector< double > (6)));
+  vector<vector<vector<double>>> avgs(numruns, vector<vector<double>>(nogen2 + 1, vector<double>(6)));
+  vector<vector<vector<double>>> avgs2(numruns, vector<vector<double>>(nogen2 + 1, vector<double>(6)));
 
-  for (int i = 0; i < numruns; i++) {
-    int currindexq = i*(nogen2+1)*lattsize*6;
-    for (int j = 0; j <= nogen2; j++) {
-      int currindexqt2 = currindexq+j*lattsize*6;
-      for (int k = 0; k < lattsize; k++) {
-        int currindex = currindexqt2 + k*6;
-        for (int l = 0; l < 6; l++) avgs[i][j][l] += results[currindex+l]/(double)lattsize;
+  for (int i = 0; i < numruns; i++)
+  {
+    int currindexq = i * (nogen2 + 1) * lattsize * 6;
+    for (int j = 0; j <= nogen2; j++)
+    {
+      int currindexqt2 = currindexq + j * lattsize * 6;
+      for (int k = 0; k < lattsize; k++)
+      {
+        int currindex = currindexqt2 + k * 6;
+        for (int l = 0; l < 6; l++)
+          avgs[i][j][l] += results[currindex + l] / (double)lattsize;
       }
     }
   }
-  for (int i = 0; i < numruns; i++) {
-    int currindexq = i*(nogen2+1)*lattsize*6;
-    for (int j = 0; j <= nogen2; j++) {
-      int currindexqt2 = currindexq + j*lattsize*6;
-      for (int k = 0; k < lattsize; k++) {
-        int currindex = currindexqt2 + k*6;
-        for (int l = 0; l < 6; l++) avgs2[i][j][l] += pow(avgs[i][j][l] - results[currindex+l],2)/(double)lattsize;
+  for (int i = 0; i < numruns; i++)
+  {
+    int currindexq = i * (nogen2 + 1) * lattsize * 6;
+    for (int j = 0; j <= nogen2; j++)
+    {
+      int currindexqt2 = currindexq + j * lattsize * 6;
+      for (int k = 0; k < lattsize; k++)
+      {
+        int currindex = currindexqt2 + k * 6;
+        for (int l = 0; l < 6; l++)
+          avgs2[i][j][l] += pow(avgs[i][j][l] - results[currindex + l], 2) / (double)lattsize;
       }
     }
   }
 
   //clear results vector to clear memory for new vectors
   results.clear();
-  vector< double >().swap(results);
- 
-  vector< double > w_avgs((nogen2+1)*3);
-  vector< double > sw_avgs((nogen2+1)*3);
+  vector<double>().swap(results);
 
-  for (int i = 0; i < numruns; i++) {
-    for (int j = 0; j <= nogen2; j++) {
-      for (int k = 0; k < 3; k++) w_avgs[j*3+k] += (avgs2[i][j][2*k] + avgs2[i][j][2*k+1])/2.0/(double)numruns;
+  vector<double> w_avgs((nogen2 + 1) * 3);
+  vector<double> sw_avgs((nogen2 + 1) * 3);
+
+  for (int i = 0; i < numruns; i++)
+  {
+    for (int j = 0; j <= nogen2; j++)
+    {
+      for (int k = 0; k < 3; k++)
+        w_avgs[j * 3 + k] += (avgs2[i][j][2 * k] + avgs2[i][j][2 * k + 1]) / 2.0 / (double)numruns;
     }
   }
 
   MPI::COMM_WORLD.Barrier();
 
-  MPI::COMM_WORLD.Reduce(&w_avgs.front(), &sw_avgs.front(), (nogen2+1)*3, MPI::DOUBLE, MPI::SUM, root);
+  MPI::COMM_WORLD.Reduce(&w_avgs.front(), &sw_avgs.front(), (nogen2 + 1) * 3, MPI::DOUBLE, MPI::SUM, root);
 
   MPI::COMM_WORLD.Barrier();
 
-  if (rank == 0) {
-    
+  if (rank == 0)
+  {
+
     //only print results vector for run q = 0, t2 = nogen2
-    int currindext2 = nogen2*lattsize*6;
-    for (int k = 0; k < lattsize; k++) {
-      int currindex = currindext2+k*6;
-      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex+0]/(double)size
-                                            << "\t" << results[currindex+1]/(double)size
-                                            << "\t" << results[currindex+2]/(double)size
-                                            << "\t" << results[currindex+3]/(double)size
-                                            << "\t" << results[currindex+4]/(double)size
-                                            << "\t" << results[currindex+5]/(double)size << endl;
+    int currindext2 = nogen2 * lattsize * 6;
+    for (int k = 0; k < lattsize; k++)
+    {
+      int currindex = currindext2 + k * 6;
+      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex + 0] / (double)size
+               << "\t" << results[currindex + 1] / (double)size
+               << "\t" << results[currindex + 2] / (double)size
+               << "\t" << results[currindex + 3] / (double)size
+               << "\t" << results[currindex + 4] / (double)size
+               << "\t" << results[currindex + 5] / (double)size << endl;
     }
-    for (int i = 0; i <= nogen2; i++) outstats2 << pow(2,i) << "\t" << sqrt(sw_avgs[i*3+0]/(double)size)
-                                                           << "\t" << sqrt(sw_avgs[i*3+1]/(double)size)
-                                                           << "\t" << sqrt(sw_avgs[i*3+2]/(double)size) << endl;
+    for (int i = 0; i <= nogen2; i++)
+      outstats2 << pow(2, i) << "\t" << sqrt(sw_avgs[i * 3 + 0] / (double)size)
+                << "\t" << sqrt(sw_avgs[i * 3 + 1] / (double)size)
+                << "\t" << sqrt(sw_avgs[i * 3 + 2] / (double)size) << endl;
   }
 
   MPI::COMM_WORLD.Barrier();
@@ -554,5 +666,4 @@ int main(int argc, char* argv[])
   MPI::Finalize();
 
   return 0;
-  
 }
