@@ -612,6 +612,23 @@ int main(int argc, char *argv[])
     }
   }
 
+  if (rank == 0)
+  {
+    //only print results vector for run q = 0, t2 = nogen2
+    int currindext2 = nogen2 * lattsize * 6;
+    for (int k = 0; k < lattsize; k++)
+    {
+      int currindex = currindext2 + k * 6;
+      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex + 0] / (double)size
+               << "\t" << results[currindex + 1] / (double)size
+               << "\t" << results[currindex + 2] / (double)size
+               << "\t" << results[currindex + 3] / (double)size
+               << "\t" << results[currindex + 4] / (double)size
+               << "\t" << results[currindex + 5] / (double)size << endl;
+    }
+    outstats.close();
+  }
+  
   //clear results vector to clear memory for new vectors
   results.clear();
   vector<double>().swap(results);
@@ -636,19 +653,6 @@ int main(int argc, char *argv[])
 
   if (rank == 0)
   {
-
-    //only print results vector for run q = 0, t2 = nogen2
-    int currindext2 = nogen2 * lattsize * 6;
-    for (int k = 0; k < lattsize; k++)
-    {
-      int currindex = currindext2 + k * 6;
-      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex + 0] / (double)size
-               << "\t" << results[currindex + 1] / (double)size
-               << "\t" << results[currindex + 2] / (double)size
-               << "\t" << results[currindex + 3] / (double)size
-               << "\t" << results[currindex + 4] / (double)size
-               << "\t" << results[currindex + 5] / (double)size << endl;
-    }
     for (int i = 0; i <= nogen2; i++)
       outstats2 << pow(2, i) << "\t" << sqrt(sw_avgs[i * 3 + 0] / (double)size)
                 << "\t" << sqrt(sw_avgs[i * 3 + 1] / (double)size)
@@ -656,8 +660,6 @@ int main(int argc, char *argv[])
   }
 
   MPI::COMM_WORLD.Barrier();
-
-  outstats.close();
 
   outstats2.close();
 
