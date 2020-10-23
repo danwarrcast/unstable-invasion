@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
   {
 
     int currindexq = q * (nogen2 + 1) * lattsize * 6;
-    aMeta.clear();
+    fill(aMeta.begin(), aMeta.end(), 0);
     // initialize lattice
     for (int i = 0; i < lattsize; i++)
     {
