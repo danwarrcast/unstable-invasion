@@ -41,7 +41,7 @@ int winstrain(int a, int b, int c, int d, int e, int f, vector<vector<vector<vec
   double G = 0.0;
   int winner;
 
-  for (int s = 0; s < 4; s++)
+  for (int s = 1; s < 4; s++)
   {
     G += gammas[a][b][c][d][e][f][s];
     if (G >= rannum)
