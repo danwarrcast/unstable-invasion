@@ -80,7 +80,7 @@ int chooseactive(vector<vector<int>> &alist, vector<int> &aM, double rN1, double
   int index = 0, actual_index = 0;
   while (index < winner_index)
   {
-    if (alist[index][2] == winner) ++index;
+    if (alist[actual_index][2] == winner) ++index;
     ++actual_index;
   }
   return actual_index;
