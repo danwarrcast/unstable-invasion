@@ -61,24 +61,29 @@ int mod(int a, int b)
   return r;
 }
 
-int chooseactive(vector<vector<int>> &alist, vector<int> &aM, double rN, double sG, double sW)
+int chooseactive(vector<vector<int>> &alist, vector<int> &aM, double rN1, double rN2, double sG, double sW)
 {
-  int index;
+  int winner;
   double sum = 0;
-  double denom = (1.0 - sG) * aM[1] + aM[2] + (1.0 - sW) * aM[3];
-  vector<double> sums = {0, (1.0 - sG) / denom, 1.0 / denom, (1.0 - sW) / denom};
-  for (int i = 0; i < aM[0]; i++)
+  double denom = (1.0 - sG) * (double)aM[1] + (double)aM[2] + (1.0 - sW) * (double)aM[3];
+  vector<double> sums = {0, (1.0 - sG) * (double)aM[1] / denom, (double)aM[2] / denom, (1.0 - sW) * (double)aM[3] / denom};
+  for (int i = 1; i < 4; i++)
   {
-    sum += sums[alist[i][2]];
+    sum += sums[i];
     if (sum >= rN)
     {
-      index = i;
+      winner = i;
       break;
     }
   }
-  if (sum < rN)
-    cout << "Loop is over and sum is only " << sum << " so I send index " << index << endl;
-  return index;
+  int winner_index = round(rN2*(aM[winner]-1));
+  int index = 0, actual_index = 0;
+  while (index < winner_index)
+  {
+    if (alist[index][2] == winner) ++index;
+    ++actual_index;
+  }
+  return actual_index;
 }
 
 int main(int argc, char *argv[])
@@ -315,8 +320,9 @@ int main(int argc, char *argv[])
 
       //choose a random lattice site to update from the list of active sites
       rannum1 = dis(generator);
-      active_rand = round(rannum1*(aMeta[0]-1));
-      //active_rand = chooseactive(active, aMeta, rannum1, sG, sW);
+      rannum2 = dis(generator);
+      //active_rand = round(rannum1*(aMeta[0]-1));
+      active_rand = chooseactive(active, aMeta, rannum1, rannum2, sG, sW);
       i_rand = active[active_rand][0];
       j_rand = active[active_rand][1];
       int a, b, c, d, e, f, g;
