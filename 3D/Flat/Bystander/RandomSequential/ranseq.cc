@@ -70,7 +70,7 @@ int chooseactive(vector<vector<int>> &alist, vector<int> &aM, double rN1, double
   for (int i = 1; i < 4; i++)
   {
     sum += sums[i];
-    if (sum >= rN)
+    if (sum >= rN1)
     {
       winner = i;
       break;
