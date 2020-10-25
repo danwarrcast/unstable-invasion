@@ -386,13 +386,21 @@ int main(int argc, char *argv[])
       if (winner != g)
       {
         //if the lattice has changed, update the lattice and active list meta data
+
+        //update lattice with new cell identity at the chosen site
         latt[i_rand * lattsize2 * 3 + j_rand * 3] = winner;
+        //add this site to the active list
         active[(winner - 1) * atmp + aMeta[winner] * 2] = i_rand;
         active[(winner - 1) * atmp + aMeta[winner] * 2 + 1] = j_rand;
+        //tell lattice where to find its new location in the active lisr
         latt[i_rand * lattsize2 * 3 + j_rand * 3 + 2] = aMeta[winner];
-        active[(g - 1) * atmp + chosenIndex * 2] = active[(g - 1) * atmp + aMeta[g] * 2];
-        active[(g - 1) * atmp + chosenIndex * 2 + 1] = active[(g - 1) * atmp + aMeta[g] * 2 + 1];
+
+        //remove the updated site from its old active list
+        active[(g - 1) * atmp + chosenIndex * 2] = active[(g - 1) * atmp + (aMeta[g]-1) * 2];
+        active[(g - 1) * atmp + chosenIndex * 2 + 1] = active[(g - 1) * atmp + (aMeta[g]-1) * 2 + 1];
+        //tell the lattice about the changes we just made
         latt[active[(g - 1) * atmp + chosenIndex * 2] * lattsize2 * 3 + active[(g - 1) * atmp + chosenIndex * 2 + 1] * 3 + 2] = chosenIndex;
+        //update counts
         --aMeta[g];
         ++aMeta[winner];
         //if the lattice has changed during the last update, update active list
