@@ -193,11 +193,10 @@ int main(int argc, char *argv[])
 
   if (rank == 0)
   {
-
-    cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
+    cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " N_procs: " << size << " Has_Image: " << image << endl;
     cout << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
 
-    outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
+    outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " N_procs: " << size << " Has_Image: " << image << endl;
     outstats << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
   }
 
@@ -259,7 +258,7 @@ int main(int argc, char *argv[])
   {
     vector<double> results(numruns * (nogen2 + 1) * lattsize * 6);
     vector<int> latt(lattsize * lattsize2 * 3);
-    vector<int> active(3 * lattsize * lattsize2 * 2);
+    vector<vector<vector<int>>> active(3, vector<vector<int>>(lattsize * lattsize2 / 6, vector<int>(3)));
     vector<int> aMeta(4);
   }
   catch (bad_alloc &ex)
@@ -271,7 +270,7 @@ int main(int argc, char *argv[])
   }
   vector<double> results(numruns * (nogen2 + 1) * lattsize * 6);
   vector<int> latt(lattsize * lattsize2 * 3);
-  vector<int> active(3 * lattsize * lattsize2 * 2);
+  vector<vector<vector<int>>> active(3, vector<vector<int>>(lattsize * lattsize2 / 6, vector<int>(3)));
   vector<int> aMeta(4);
 
   for (int q = 0; q < numruns; q++)
@@ -280,26 +279,24 @@ int main(int argc, char *argv[])
     int currindexq = q * (nogen2 + 1) * lattsize * 6;
     fill(aMeta.begin(), aMeta.end(), 0);
     // initialize lattice
-    int atmp = lattsize * lattsize2 * 2;
     for (int i = 0; i < lattsize; i++)
     {
-      int tmpindex = i * lattsize2 * 3;
+      int tmpindex = i * lattsize2;
       for (int j = 0; j < lattsize2; j++)
       {
-        latt[tmpindex + j * 3 + 0] = 1;
-        latt[tmpindex + j * 3 + 1] = 0;
-        latt[tmpindex + j * 3 + 2] = 0;
+        latt[tmpindex + j + 0] = 1;
+        latt[tmpindex + j + 1] = 0;
+        latt[tmpindex + j + 2] = 0;
         if (j > left && j <= right)
         {
-          latt[tmpindex + j * 3 + 0] = 2;
+          latt[tmpindex + j + 0] = 2;
         }
-        int m = latt[tmpindex + j * 3 + 0];
+        int m = latt[tmpindex + j + 0];
         if (j == left || j == left + 1 || j == right || j == right + 1)
         {
-          active[(m - 1) * atmp + aMeta[m] * 2] = i;
-          active[(m - 1) * atmp + aMeta[m] * 2 + 1] = j;
-          latt[tmpindex + j * 3 + 1] = 1;
-          latt[tmpindex + j * 3 + 2] = aMeta[m];
+          active[m - 1][aMeta[m]] = {i, j};
+          latt[tmpindex + j + 1] = 1;
+          latt[tmpindex + j + 2] = aMeta[m];
           aMeta[0]++;
           aMeta[m]++;
         }
@@ -330,8 +327,8 @@ int main(int argc, char *argv[])
       active_rand = chooseactive(aMeta, rannum1, rannum2, sG, sW);
       int chosenIndex = active_rand[0];
       int g = active_rand[1];
-      i_rand = active[(g - 1) * atmp + chosenIndex * 2];
-      j_rand = active[(g - 1) * atmp + chosenIndex * 2 + 1];
+      i_rand = active[g][chosenIndex][0];
+      j_rand = active[g][chosenIndex][1];
       int a, b, c, d, e, f;
       int lxindex = mod(i_rand - 1, lattsize);
       int rxindex = mod(i_rand + 1, lattsize);
@@ -340,22 +337,22 @@ int main(int argc, char *argv[])
       if (j_rand % 2 == 0)
       {
         //find neighbors of the chosen site if j-index is even
-        a = latt[lxindex * lattsize2 * 3 + j_rand * 3];
-        b = latt[rxindex * lattsize2 * 3 + j_rand * 3];
-        c = latt[i_rand * lattsize2 * 3 + uyindex * 3];
-        d = latt[rxindex * lattsize2 * 3 + uyindex * 3];
-        e = latt[i_rand * lattsize2 * 3 + dyindex * 3];
-        f = latt[rxindex * lattsize2 * 3 + dyindex * 3];
+        a = latt[lxindex * lattsize2 + j_rand];
+        b = latt[rxindex * lattsize2 + j_rand];
+        c = latt[i_rand * lattsize2 + uyindex];
+        d = latt[rxindex * lattsize2 + uyindex];
+        e = latt[i_rand * lattsize2 + dyindex];
+        f = latt[rxindex * lattsize2 + dyindex];
       }
       else
       {
         //find neighbors of the chosen site if j-index is odd
-        a = latt[lxindex * lattsize2 * 3 + j_rand * 3];
-        b = latt[rxindex * lattsize2 * 3 + j_rand * 3];
-        c = latt[i_rand * lattsize2 * 3 + uyindex * 3];
-        d = latt[lxindex * lattsize2 * 3 + uyindex * 3];
-        e = latt[i_rand * lattsize2 * 3 + dyindex * 3];
-        f = latt[lxindex * lattsize2 * 3 + dyindex * 3];
+        a = latt[lxindex * lattsize2 + j_rand];
+        b = latt[rxindex * lattsize2 + j_rand];
+        c = latt[i_rand * lattsize2 + uyindex];
+        d = latt[lxindex * lattsize2 + uyindex];
+        e = latt[i_rand * lattsize2 + dyindex];
+        f = latt[lxindex * lattsize2 + dyindex];
       }
       int winner = 0;
       if (a == b && b == c && c == d && d == e && e == f)
@@ -386,13 +383,11 @@ int main(int argc, char *argv[])
       if (winner != g)
       {
         //if the lattice has changed, update the lattice and active list meta data
-        latt[i_rand * lattsize2 * 3 + j_rand * 3] = winner;
-        active[(winner - 1) * atmp + aMeta[winner] * 2] = i_rand;
-        active[(winner - 1) * atmp + aMeta[winner] * 2 + 1] = j_rand;
-        latt[i_rand * lattsize2 * 3 + j_rand * 3 + 2] = aMeta[winner];
-        active[(g - 1) * atmp + chosenIndex * 2] = active[(g - 1) * atmp + aMeta[g] * 2];
-        active[(g - 1) * atmp + chosenIndex * 2 + 1] = active[(g - 1) * atmp + aMeta[g] * 2 + 1];
-        latt[active[(g - 1) * atmp + chosenIndex * 2] * lattsize2 * 3 + active[(g - 1) * atmp + chosenIndex * 2 + 1] * 3 + 2] = chosenIndex;
+        latt[i_rand * lattsize2 + j_rand] = winner;
+        active[winner][aMeta[winner]] = {i_rand, j_rand};
+        latt[i_rand * lattsize2 + j_rand + 2] = aMeta[winner];
+        active[g][chosenIndex] = active[g][aMeta[g] - 1];
+        latt[active[g][chosenIndex][0] * lattsize2 + active[g][chosenIndex][1] + 2] = chosenIndex;
         --aMeta[g];
         ++aMeta[winner];
         //if the lattice has changed during the last update, update active list
@@ -423,8 +418,8 @@ int main(int argc, char *argv[])
         {
           //for each of the neighbors of the updated cell (including updated cell), check if that cell is now active or inactive
           int new_i = vec[0], new_j = vec[1], new_m = vec[2];
-          int in_active = latt[new_i * lattsize2 * 3 + new_j * 3 + 1];
-          int index = latt[new_i * lattsize2 * 3 + new_j * 3 + 2];
+          int in_active = latt[new_i * lattsize2 + new_j + 1];
+          int index = latt[new_i * lattsize2 + new_j + 2];
           int ta, tb, tc, td, te, tf;
           int n_lxindex = mod(new_i - 1, lattsize);
           int n_rxindex = mod(new_i + 1, lattsize);
@@ -433,22 +428,22 @@ int main(int argc, char *argv[])
           if (new_j % 2 == 0)
           {
             //find nearest neighbors of site (new_i,new_j) if new_j is even
-            ta = latt[n_lxindex * lattsize2 * 3 + new_j * 3];
-            tb = latt[n_rxindex * lattsize2 * 3 + new_j * 3];
-            tc = latt[new_i * lattsize2 * 3 + n_uyindex * 3];
-            td = latt[n_rxindex * lattsize2 * 3 + n_uyindex * 3];
-            te = latt[new_i * lattsize2 * 3 + n_dyindex * 3];
-            tf = latt[n_rxindex * lattsize2 * 3 + n_dyindex * 3];
+            ta = latt[n_lxindex * lattsize2 + new_j];
+            tb = latt[n_rxindex * lattsize2 + new_j];
+            tc = latt[new_i * lattsize2 + n_uyindex];
+            td = latt[n_rxindex * lattsize2 + n_uyindex];
+            te = latt[new_i * lattsize2 + n_dyindex];
+            tf = latt[n_rxindex * lattsize2 + n_dyindex];
           }
           else
           {
             //find nearest neighbors of site (new_i,new_j) if new_j is odd
-            ta = latt[n_lxindex * lattsize2 * 3 + new_j * 3];
-            tb = latt[n_rxindex * lattsize2 * 3 + new_j * 3];
-            tc = latt[new_i * lattsize2 * 3 + n_uyindex * 3];
-            td = latt[n_lxindex * lattsize2 * 3 + n_uyindex * 3];
-            te = latt[new_i * lattsize2 * 3 + n_dyindex * 3];
-            tf = latt[n_lxindex * lattsize2 * 3 + n_dyindex * 3];
+            ta = latt[n_lxindex * lattsize2 + new_j];
+            tb = latt[n_rxindex * lattsize2 + new_j];
+            tc = latt[new_i * lattsize2 + n_uyindex];
+            td = latt[n_lxindex * lattsize2 + n_uyindex];
+            te = latt[new_i * lattsize2 + n_dyindex];
+            tf = latt[n_lxindex * lattsize2 + n_dyindex];
           }
           //check if current site is in the active list
           if (in_active == 1)
@@ -457,11 +452,10 @@ int main(int argc, char *argv[])
             if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
             {
               //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
-              active[(new_m - 1) * atmp + index * 2] = active[(new_m - 1) * atmp + (aMeta[new_m] - 1) * 2];
-              active[(new_m - 1) * atmp + index * 2 + 1] = active[(new_m - 1) * atmp + (aMeta[new_m] - 1) * 2 + 1];
-              latt[active[(new_m - 1) * atmp + index * 2] * lattsize2 * 3 + active[(new_m - 1) * atmp + index * 2 + 1] * 3 + 2] = index;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 1] = 0;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 2] = atmp;
+              active[new_m][index] = active[new_m][aMeta[new_m] - 1];
+              latt[active[new_m][index][0] * lattsize2 + active[new_m][index][1] + 2] = index;
+              latt[new_i * lattsize2 + new_j + 1] = 0;
+              latt[new_i * lattsize2 + new_j + 2] = active[new_m].size() + 1;
               --aMeta[0];
               --aMeta[new_m];
             }
@@ -471,10 +465,9 @@ int main(int argc, char *argv[])
             if (new_m != ta || new_m != tb || new_m != tc || new_m != td || new_m != te || new_m != tf)
             {
               //if current lattice site is not in the active list and has at least one neighbor with a different identity, add it to active list
-              active[(new_m - 1) * atmp + aMeta[new_m] * 2] = new_i;
-              active[(new_m - 1) * atmp + aMeta[new_m] * 2 + 1] = new_j;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 1] = 1;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 2] = aMeta[new_m];
+              active[new_m][aMeta[new_m]] = {new_i, new_j};
+              latt[new_i * lattsize2 + new_j + 1] = 1;
+              latt[new_i * lattsize2 + new_j + 2] = aMeta[new_m];
               ++aMeta[0];
               ++aMeta[new_m];
             }
@@ -487,23 +480,23 @@ int main(int argc, char *argv[])
 
         int currindexqt2 = currindexq + t2 * lattsize * 6;
         if (rank == 0)
-          cout << ": (q,t2,t) = (" << q << "," << t2 << "," << t << "); aSize = " << aMeta[0] << endl;
+          cout << rank << ": (q,t2,t) = (" << q << "," << t2 << "," << t << "); aSize = " << aMeta[0] << endl;
 
-        for (int i = 0; i < lattsize; ++i)
+        for (int i = 0; i < lattsize; --i)
         {
-          int tmpindex = i * lattsize2 * 3;
+          int tmpindex = i * lattsize2;
           //Find first and last elements in current column of the lattice with value >1
-          for (int j = 0; j < lattsize2; ++j)
+          for (int j = 0; j < lattsize2; --j)
           {
-            if (latt[tmpindex + j * 3] > 1)
+            if (latt[tmpindex + j] > 1)
             {
               Lmax = j;
               break;
             }
           }
-          for (int j = lattsize2 - 1; j >= 0; --j)
+          for (int j = lattsize2 - 1; j > 0; --j)
           {
-            if (latt[tmpindex + j * 3] > 1)
+            if (latt[tmpindex + j] > 1)
             {
               Rmax = j;
               break;
@@ -516,9 +509,9 @@ int main(int argc, char *argv[])
           //depending on which side of the lattice the green cell is on
           for (int j = Lmax; j < Rmax; j++)
           {
-            if (latt[tmpindex + j * 3] == 1 && j < lattsize2 / 2)
+            if (latt[tmpindex + j] == 1 && j < lattsize2 / 2)
               Lmatches.push_back(j);
-            if (latt[tmpindex + j * 3] == 1 && j > lattsize2 / 2)
+            if (latt[tmpindex + j] == 1 && j > lattsize2 / 2)
               Rmatches.push_back(j);
           }
 
@@ -577,14 +570,14 @@ int main(int argc, char *argv[])
   {
     for (int i = 0; i < lattsize; ++i)
     {
-      int tmpindex = i * lattsize2 * 3;
+      int tmpindex = i * lattsize2;
       for (int j = 0; j < lattsize2; ++j)
       {
         double x = (double)i - 0.5 * (j % 2);
         double y = j * sqrt(3) / 2;
-        if (latt[tmpindex + j * 3] > 1)
+        if (latt[tmpindex + j] > 1)
         {
-          outstats3 << t2 << "\t" << x << "\t" << y << "\t" << latt[tmpindex + j * 3] << endl;
+          outstats3 << t2 << "\t" << x << "\t" << y << "\t" << latt[tmpindex + j] << endl;
         }
       }
     }
@@ -595,7 +588,7 @@ int main(int argc, char *argv[])
   latt.clear();
   vector<int>().swap(latt);
   active.clear();
-  vector<int>().swap(active);
+  vector<vector<vector<int>>>().swap(active);
 
   vector<vector<vector<double>>> avgs(numruns, vector<vector<double>>(nogen2 + 1, vector<double>(6)));
   vector<vector<vector<double>>> avgs2(numruns, vector<vector<double>>(nogen2 + 1, vector<double>(6)));
@@ -636,12 +629,12 @@ int main(int argc, char *argv[])
     for (int k = 0; k < lattsize; k++)
     {
       int currindex = currindext2 + k * 6;
-      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex + 0]
-               << "\t" << results[currindex + 1]
-               << "\t" << results[currindex + 2]
-               << "\t" << results[currindex + 3]
-               << "\t" << results[currindex + 4]
-               << "\t" << results[currindex + 5] << endl;
+      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex + 0] / (double)size
+               << "\t" << results[currindex + 1] / (double)size
+               << "\t" << results[currindex + 2] / (double)size
+               << "\t" << results[currindex + 3] / (double)size
+               << "\t" << results[currindex + 4] / (double)size
+               << "\t" << results[currindex + 5] / (double)size << endl;
     }
     outstats.close();
   }
@@ -670,7 +663,6 @@ int main(int argc, char *argv[])
 
   if (rank == 0)
   {
-
     for (int i = 0; i <= nogen2; i++)
       outstats2 << pow(2, i) << "\t" << sqrt(sw_avgs[i * 3 + 0] / (double)size)
                 << "\t" << sqrt(sw_avgs[i * 3 + 1] / (double)size)
