@@ -151,18 +151,18 @@ int main(int argc, char *argv[])
     }
 
     testoutstats.clear(ios::failbit);
-    outstats.open(statsfilename.c_str());
+    outstats2.open(statsfilename.c_str());
 
     cout << statsfilename.c_str() << endl;
 
-    statsfilename = "diffusion_out/man/ranseq_w";
+    statsfilename = "diffusion_out/man/ranseq_boundary";
 
     tempstring.str("");
     tempstring.clear();
     tempstring << "_run" << filecounter;
     statsfilename += tempstring.str();
 
-    outstats2.open(statsfilename.c_str());
+    outstats.open(statsfilename.c_str());
 
     cout << statsfilename.c_str() << endl;
 
@@ -199,9 +199,16 @@ int main(int argc, char *argv[])
 
     outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
     outstats << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
-  }
 
-  int lattsize2 = lattsize * 4;
+    outstats2 << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
+    outstats2 << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
+
+    if (image)
+    {
+      outstats3 << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
+      outstats3 << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
+    }
+  }
 
   mt19937 generator(seed);
   boost::random::uniform_real_distribution<double> dis(0, 1);
@@ -244,13 +251,11 @@ int main(int argc, char *argv[])
   }
 
   bool pow_2 = false;
-  int t2;
   int nogen2 = ceil(log2(nogen));
+  int lattsize2 = lattsize * 4;
 
   int left = (lattsize2) / 2 - lattsize / 4, right = (lattsize2) / 2 + lattsize / 4;
-  int Lmax, Rmax, LInt, RInt, i_rand, j_rand;
-  vector<int> active_rand;
-  double dt;
+  int Lmax, Rmax, LInt, RInt;
 
   char *_emergencyMemory = new char[16384];
   try
@@ -277,34 +282,37 @@ int main(int argc, char *argv[])
 
     int currindexq = q * (nogen2 + 1) * lattsize * 6;
     fill(aMeta.begin(), aMeta.end(), 0);
-    // initialize lattice
     int atmp = lattsize * lattsize2 * 2;
+
+    // initialize lattice
     for (int i = 0; i < lattsize; i++)
     {
       int tmpindex = i * lattsize2 * 3;
       for (int j = 0; j < lattsize2; j++)
       {
-        latt[tmpindex + j * 3 + 0] = 1;
-        latt[tmpindex + j * 3 + 1] = 0;
-        latt[tmpindex + j * 3 + 2] = 0;
+        int tmpindex2 = tmpindex + j * 3;
+        latt[tmpindex2 + 0] = 1;
+        latt[tmpindex2 + 1] = 0;
+        latt[tmpindex2 + 2] = 0;
         if (j > left && j <= right)
         {
-          latt[tmpindex + j * 3 + 0] = 2;
+          latt[tmpindex2 + 0] = 2;
         }
-        int m = latt[tmpindex + j * 3 + 0];
+        int m = latt[tmpindex2 + 0];
         if (j == left || j == left + 1 || j == right || j == right + 1)
         {
-          active[(m - 1) * atmp + aMeta[m] * 2] = i;
-          active[(m - 1) * atmp + aMeta[m] * 2 + 1] = j;
-          latt[tmpindex + j * 3 + 1] = 1;
-          latt[tmpindex + j * 3 + 2] = aMeta[m];
+          int tmpindexa = (m - 1) * atmp + aMeta[m] * 2;
+          active[tmpindexa] = i;
+          active[tmpindexa + 1] = j;
+          latt[tmpindex2 + 1] = 1;
+          latt[tmpindex2 + 2] = aMeta[m];
           aMeta[0]++;
           aMeta[m]++;
         }
       }
     }
 
-    t2 = 0;
+    int t2 = 0;
     double t = 0.0;
     while (t <= pow(2, nogen2) + 1)
     {
@@ -325,11 +333,13 @@ int main(int argc, char *argv[])
       rannum1 = dis(generator);
       rannum2 = dis(generator);
       //active_rand = round(rannum1*(aMeta[0]-1));
+      vector<int> active_rand(2);
       active_rand = chooseactive(aMeta, rannum1, rannum2, sG, sW);
       int chosenIndex = active_rand[0];
       int g = active_rand[1];
-      i_rand = active[(g - 1) * atmp + chosenIndex * 2];
-      j_rand = active[(g - 1) * atmp + chosenIndex * 2 + 1];
+      int tmpindexa = (g - 1) * atmp + chosenIndex * 2;
+      int i_rand = active[tmpindexa];
+      int j_rand = active[tmpindexa + 1];
       int a, b, c, d, e, f;
       int lxindex = mod(i_rand - 1, lattsize);
       int rxindex = mod(i_rand + 1, lattsize);
@@ -386,21 +396,30 @@ int main(int argc, char *argv[])
         //if the lattice has changed, update the lattice and active list meta data
 
         //update lattice with new cell identity at the chosen site
-        latt[i_rand * lattsize2 * 3 + j_rand * 3] = winner;
+        int tmpindex = i_rand * lattsize2 * 3 + j_rand * 3;
+        latt[tmpindex] = winner;
+
         //add this site to the active list
-        active[(winner - 1) * atmp + aMeta[winner] * 2] = i_rand;
-        active[(winner - 1) * atmp + aMeta[winner] * 2 + 1] = j_rand;
+        tmpindexa = (winner - 1) * atmp + aMeta[winner] * 2;
+        active[tmpindexa] = i_rand;
+        active[tmpindexa + 1] = j_rand;
+
         //tell lattice where to find its new location in the active lisr
-        latt[i_rand * lattsize2 * 3 + j_rand * 3 + 2] = aMeta[winner];
+        latt[tmpindex + 2] = aMeta[winner];
 
         //remove the updated site from its old active list
-        active[(g - 1) * atmp + chosenIndex * 2] = active[(g - 1) * atmp + (aMeta[g]-1) * 2];
-        active[(g - 1) * atmp + chosenIndex * 2 + 1] = active[(g - 1) * atmp + (aMeta[g]-1) * 2 + 1];
+        tmpindexa = (g - 1) * atmp + chosenIndex * 2;
+        int tmpindexa2 = (g - 1) * atmp + (aMeta[g]-1) * 2;
+        active[tmpindexa] = active[tmpindexa2];
+        active[tmpindexa + 1] = active[tmpindexa2 + 1];
+
         //tell the lattice about the changes we just made
-        latt[active[(g - 1) * atmp + chosenIndex * 2] * lattsize2 * 3 + active[(g - 1) * atmp + chosenIndex * 2 + 1] * 3 + 2] = chosenIndex;
+        latt[active[tmpindexa] * lattsize2 * 3 + active[tmpindexa + 1] * 3 + 2] = chosenIndex;
+
         //update counts
         --aMeta[g];
         ++aMeta[winner];
+
         //if the lattice has changed during the last update, update active list
         vector<vector<int>> tmp(7, vector<int>(3));
         if (j_rand % 2 == 0)
@@ -429,8 +448,9 @@ int main(int argc, char *argv[])
         {
           //for each of the neighbors of the updated cell (including updated cell), check if that cell is now active or inactive
           int new_i = vec[0], new_j = vec[1], new_m = vec[2];
-          int in_active = latt[new_i * lattsize2 * 3 + new_j * 3 + 1];
-          int index = latt[new_i * lattsize2 * 3 + new_j * 3 + 2];
+          tmpindex = new_i * lattsize2 * 3 + new_j * 3;
+          int in_active = latt[tmpindex + 1];
+          int index = latt[tmpindex + 2];
           int ta, tb, tc, td, te, tf;
           int n_lxindex = mod(new_i - 1, lattsize);
           int n_rxindex = mod(new_i + 1, lattsize);
@@ -463,11 +483,14 @@ int main(int argc, char *argv[])
             if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
             {
               //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
-              active[(new_m - 1) * atmp + index * 2] = active[(new_m - 1) * atmp + (aMeta[new_m] - 1) * 2];
-              active[(new_m - 1) * atmp + index * 2 + 1] = active[(new_m - 1) * atmp + (aMeta[new_m] - 1) * 2 + 1];
-              latt[active[(new_m - 1) * atmp + index * 2] * lattsize2 * 3 + active[(new_m - 1) * atmp + index * 2 + 1] * 3 + 2] = index;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 1] = 0;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 2] = atmp;
+              tmpindexa = (new_m - 1) * atmp + index * 2;
+              tmpindexa2 = (new_m - 1) * atmp + (aMeta[new_m] - 1) * 2;
+              active[tmpindexa] = active[tmpindexa2];
+              active[tmpindexa + 1] = active[tmpindexa2 + 1];
+              latt[active[tmpindexa] * lattsize2 * 3 + active[tmpindexa + 1] * 3 + 2] = index;
+              tmpindex = new_i * lattsize2 * 3 + new_j * 3;
+              latt[tmpindex + 1] = 0;
+              latt[tmpindex + 2] = atmp;
               --aMeta[0];
               --aMeta[new_m];
             }
@@ -477,10 +500,12 @@ int main(int argc, char *argv[])
             if (new_m != ta || new_m != tb || new_m != tc || new_m != td || new_m != te || new_m != tf)
             {
               //if current lattice site is not in the active list and has at least one neighbor with a different identity, add it to active list
-              active[(new_m - 1) * atmp + aMeta[new_m] * 2] = new_i;
-              active[(new_m - 1) * atmp + aMeta[new_m] * 2 + 1] = new_j;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 1] = 1;
-              latt[new_i * lattsize2 * 3 + new_j * 3 + 2] = aMeta[new_m];
+              tmpindexa = (new_m - 1) * atmp + aMeta[new_m] * 2;
+              active[tmpindexa] = new_i;
+              active[tmpindexa + 1] = new_j;
+              tmpindex = new_i * lattsize2 * 3 + new_j * 3;
+              latt[tmpindex + 1] = 1;
+              latt[tmpindex + 2] = aMeta[new_m];
               ++aMeta[0];
               ++aMeta[new_m];
             }
@@ -574,7 +599,7 @@ int main(int argc, char *argv[])
         t2++;
       }
       //Advance the time according to Gillespie's algorithm
-      dt = -log(1.0 - dis(generator)) / (double)aMeta[0];
+      double dt = -log(1.0 - dis(generator)) / (double)aMeta[0];
       t = t + dt;
     }
   }
@@ -590,7 +615,7 @@ int main(int argc, char *argv[])
         double y = j * sqrt(3) / 2;
         if (latt[tmpindex + j * 3] > 1)
         {
-          outstats3 << t2 << "\t" << x << "\t" << y << "\t" << latt[tmpindex + j * 3] << endl;
+          outstats3 << nogen2 << "\t" << x << "\t" << y << "\t" << latt[tmpindex + j * 3] << endl;
         }
       }
     }
