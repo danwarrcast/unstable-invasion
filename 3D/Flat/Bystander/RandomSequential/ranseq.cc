@@ -615,7 +615,7 @@ int main(int argc, char *argv[])
         double y = j * sqrt(3) / 2;
         if (latt[tmpindex + j * 3] > 1)
         {
-          outstats3 << nogen2 << "\t" << x << "\t" << y << "\t" << latt[tmpindex + j * 3] << endl;
+          outstats3 << nogen2 << "," << x << "," << y << "," << latt[tmpindex + j * 3] << endl;
         }
       }
     }
@@ -667,12 +667,12 @@ int main(int argc, char *argv[])
     for (int k = 0; k < lattsize; k++)
     {
       int currindex = currindext2 + k * 6;
-      outstats << "0\t" << nogen2 << "\t" << k << "\t" << results[currindex + 0]
-               << "\t" << results[currindex + 1]
-               << "\t" << results[currindex + 2]
-               << "\t" << results[currindex + 3]
-               << "\t" << results[currindex + 4]
-               << "\t" << results[currindex + 5] << endl;
+      outstats << "0," << nogen2 << "," << k << "," << results[currindex + 0]
+               << "," << results[currindex + 1]
+               << "," << results[currindex + 2]
+               << "," << results[currindex + 3]
+               << "," << results[currindex + 4]
+               << "," << results[currindex + 5] << endl;
     }
     outstats.close();
   }
@@ -703,9 +703,9 @@ int main(int argc, char *argv[])
   {
 
     for (int i = 0; i <= nogen2; i++)
-      outstats2 << pow(2, i) << "\t" << sqrt(sw_avgs[i * 3 + 0] / (double)size)
-                << "\t" << sqrt(sw_avgs[i * 3 + 1] / (double)size)
-                << "\t" << sqrt(sw_avgs[i * 3 + 2] / (double)size) << endl;
+      outstats2 << pow(2, i) << "," << sqrt(sw_avgs[i * 3 + 0] / (double)size)
+                << "," << sqrt(sw_avgs[i * 3 + 1] / (double)size)
+                << "," << sqrt(sw_avgs[i * 3 + 2] / (double)size) << endl;
   }
 
   MPI::COMM_WORLD.Barrier();
