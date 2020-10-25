@@ -248,8 +248,6 @@ int main(int argc, char *argv[])
   int nogen2 = ceil(log2(nogen));
 
   int left = (lattsize2) / 2 - lattsize / 4, right = (lattsize2) / 2 + lattsize / 4;
-  vector<vector<int>>::iterator Lit;
-  vector<vector<int>>::reverse_iterator Rit;
   int Lmax, Rmax, LInt, RInt, i_rand, j_rand;
   vector<int> active_rand;
   double dt;
