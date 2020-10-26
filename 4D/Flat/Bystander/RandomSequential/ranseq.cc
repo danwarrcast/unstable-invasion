@@ -660,8 +660,8 @@ int main(int argc, char *argv[])
 
   if (rank == 0)
   {
-    //only print results vector for run q = 0, t2 = nogen2
-    int currindext2 = nogen2 * lattsize * lattsize * 6;
+    //only print results vector for run q = numruns-1, t2 = nogen2
+    int currindext2 = (nogen2 + 1) * lattsize * lattsize * 6 + nogen2 * lattsize * lattsize * 6;
     for (int k = 0; k < lattsize; k++)
     {
       int currindexk = currindext2 + k * lattsize * 6;
