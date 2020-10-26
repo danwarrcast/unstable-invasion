@@ -400,7 +400,7 @@ int main(int argc, char *argv[])
         tmpindexa = (winner - 1) * atmp + aMeta[winner] * 3;
         active[tmpindexa] = i_rand;
         active[tmpindexa + 1] = j_rand;
-        active[tmpindexa + 1] = k_rand;
+        active[tmpindexa + 2] = k_rand;
 
         //tell lattice where to find its new location in the active lisr
         latt[tmpindex + 2] = aMeta[winner];
@@ -426,7 +426,7 @@ int main(int argc, char *argv[])
                {i_rand, byindex, k_rand, c},
                {i_rand, fyindex, k_rand, d},
                {i_rand, j_rand, uzindex, e},
-               {j_rand, j_rand, dzindex, f},
+               {i_rand, j_rand, dzindex, f},
                {i_rand, j_rand, k_rand, winner}};
         for (auto &vec : tmp)
         {
@@ -460,7 +460,7 @@ int main(int argc, char *argv[])
               active[tmpindexa] = active[tmpindexa2];
               active[tmpindexa + 1] = active[tmpindexa2 + 1];
               active[tmpindexa + 2] = active[tmpindexa2 + 2];
-              latt[active[tmpindexa] * lsxls2x3 + active[tmpindexa + 1] * ls2x3 + active[tmpindexa + 3] * 3 + 2] = index;
+              latt[active[tmpindexa] * lsxls2x3 + active[tmpindexa + 1] * ls2x3 + active[tmpindexa + 2] * 3 + 2] = index;
               tmpindex = new_i * lsxls2x3 + new_j * ls2x3 + new_k * 3;
               latt[tmpindex + 1] = 0;
               latt[tmpindex + 2] = atmp;
