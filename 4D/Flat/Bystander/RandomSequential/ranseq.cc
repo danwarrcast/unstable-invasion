@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
       int tmpindex = i * lattsize * lattsize2 * 3;
       for (int j = 0; j < lattsize; j++)
       {
-          int tmpindex2 = tmpindex + j * lattsize2 * 3;
+        int tmpindex2 = tmpindex + j * lattsize2 * 3;
         for (int k = 0; k < lattsize2; k++)
         {
           int tmpindex3 = tmpindex2 + k * 3;
@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
 
         //remove the updated site from its old active list
         tmpindexa = (g - 1) * atmp + chosenIndex * 2;
-        int tmpindexa2 = (g - 1) * atmp + (aMeta[g]-1) * 2;
+        int tmpindexa2 = (g - 1) * atmp + (aMeta[g] - 1) * 2;
         active[tmpindexa] = active[tmpindexa2];
         active[tmpindexa + 1] = active[tmpindexa2 + 1];
 
@@ -647,10 +647,10 @@ int main(int argc, char *argv[])
           {
             avgs2[i][j][l] += pow(avgs[i][j][l] - results[currindex + l], 2) / (double)lattsize / (double)lattsize;
           }
+        }
       }
     }
   }
-
   if (rank == 0)
   {
     //only print results vector for run q = 0, t2 = nogen2
