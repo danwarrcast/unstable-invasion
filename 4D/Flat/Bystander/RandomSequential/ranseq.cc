@@ -627,7 +627,7 @@ int main(int argc, char *argv[])
           int currindex = currindexk + l * 6;
           for (int s = 0; s < 6; ++s)
           {
-            avgs[i][j][l] += results[currindex + s] / (double)lattsize / (double)lattsize;
+            avgs[i][j][s] += results[currindex + s] / (double)lattsize / (double)lattsize;
           }
         }
       }
@@ -647,7 +647,7 @@ int main(int argc, char *argv[])
           int currindex = currindexk + l * 6;
           for (int s = 0; s < 6; ++s)
           {
-            avgs2[i][j][l] += pow(avgs[i][j][l] - results[currindex + l], 2) / (double)lattsize / (double)lattsize;
+            avgs2[i][j][s] += pow(avgs[i][j][s] - results[currindex + s], 2) / (double)lattsize / (double)lattsize;
           }
         }
       }
