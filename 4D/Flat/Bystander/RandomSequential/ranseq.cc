@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 
     int currindexq = q * (nogen2 + 1) * lattsize * lattsize * 6;
     fill(aMeta.begin(), aMeta.end(), 0);
-    int atmp = lattsize * lattsize * lattsize2 * 2;
+    int atmp = lattsize * lattsize * lattsize2 * 3;
 
     // initialize lattice
     for (int i = 0; i < lattsize; i++)
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
       active_rand = chooseactive(aMeta, rannum1, rannum2, sG, sW);
       int chosenIndex = active_rand[0];
       int g = active_rand[1];
-      int tmpindexa = (g - 1) * atmp + chosenIndex * 2;
+      int tmpindexa = (g - 1) * atmp + chosenIndex * 3;
       int i_rand = active[tmpindexa];
       int j_rand = active[tmpindexa + 1];
       int k_rand = active[tmpindexa + 2];
@@ -409,6 +409,7 @@ int main(int argc, char *argv[])
         int tmpindexa2 = (g - 1) * atmp + (aMeta[g] - 1) * 2;
         active[tmpindexa] = active[tmpindexa2];
         active[tmpindexa + 1] = active[tmpindexa2 + 1];
+        active[tmpindexa + 2] = active[tmpindexa2 + 2];
 
         //tell the lattice about the changes we just made
         latt[active[tmpindexa] * lsxls2x3 + active[tmpindexa + 1] * ls2x3 + active[tmpindexa + 2] * 3 + 2] = chosenIndex;
@@ -453,8 +454,8 @@ int main(int argc, char *argv[])
             if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
             {
               //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
-              tmpindexa = (new_m - 1) * atmp + index * 2;
-              tmpindexa2 = (new_m - 1) * atmp + (aMeta[new_m] - 1) * 2;
+              tmpindexa = (new_m - 1) * atmp + index * 3;
+              tmpindexa2 = (new_m - 1) * atmp + (aMeta[new_m] - 1) * 3;
               active[tmpindexa] = active[tmpindexa2];
               active[tmpindexa + 1] = active[tmpindexa2 + 1];
               active[tmpindexa + 2] = active[tmpindexa2 + 2];
@@ -471,7 +472,7 @@ int main(int argc, char *argv[])
             if (new_m != ta || new_m != tb || new_m != tc || new_m != td || new_m != te || new_m != tf)
             {
               //if current lattice site is not in the active list and has at least one neighbor with a different identity, add it to active list
-              tmpindexa = (new_m - 1) * atmp + aMeta[new_m] * 2;
+              tmpindexa = (new_m - 1) * atmp + aMeta[new_m] * 3;
               active[tmpindexa] = new_i;
               active[tmpindexa + 1] = new_j;
               active[tmpindexa + 2] = new_k;
