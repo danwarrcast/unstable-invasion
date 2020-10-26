@@ -66,8 +66,8 @@ vector<int> chooseactive(vector<int> &aM, double rN1, double rN2, double sG, dou
 {
   int winner;
   double sum = 0;
-  double denom = (1.0 - sG) * (double)aM[1] + (double)aM[2] + (1.0 - sW) * (double)aM[3];
-  vector<double> sums = {0, (1.0 - sG) * (double)aM[1] / denom, (double)aM[2] / denom, (1.0 - sW) * (double)aM[3] / denom};
+  double denom = (1.0 + sG) * (double)aM[1] + (double)aM[2] + (1.0 + sW) * (double)aM[3];
+  vector<double> sums = {0, (1.0 + sG) * (double)aM[1] / denom, (double)aM[2] / denom, (1.0 + sW) * (double)aM[3] / denom};
   for (int i = 1; i < 4; i++)
   {
     sum += sums[i];
@@ -297,6 +297,16 @@ int main(int argc, char *argv[])
         if (j > left && j <= right)
         {
           latt[tmpindex2 + 0] = 2;
+	  if (mu > 0.0000000001)
+	  {
+	    int tmpindexa = (2 - 1) * atmp + aMeta[2] * 2;
+	    active[tmpindexa] = i;
+            active[tmpindexa + 1] = j;
+            latt[tmpindex2 + 1] = 1;
+            latt[tmpindex2 + 2] = aMeta[2];
+            aMeta[0]++;
+            aMeta[2]++;
+	  }
         }
         int m = latt[tmpindex2 + 0];
         if (j == left || j == left + 1 || j == right || j == right + 1)
@@ -479,20 +489,42 @@ int main(int argc, char *argv[])
           //check if current site is in the active list
           if (in_active == 1)
           {
-            //if current site is in the active list, check if it *should* be in the active list
-            if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
+            if (mu > 0.0000000001)
             {
-              //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
-              tmpindexa = (new_m - 1) * atmp + index * 2;
-              tmpindexa2 = (new_m - 1) * atmp + (aMeta[new_m] - 1) * 2;
-              active[tmpindexa] = active[tmpindexa2];
-              active[tmpindexa + 1] = active[tmpindexa2 + 1];
-              latt[active[tmpindexa] * lattsize2 * 3 + active[tmpindexa + 1] * 3 + 2] = index;
-              tmpindex = new_i * lattsize2 * 3 + new_j * 3;
-              latt[tmpindex + 1] = 0;
-              latt[tmpindex + 2] = atmp;
-              --aMeta[0];
-              --aMeta[new_m];
+              if (new_m != 2)
+              {
+                if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
+                {
+                  //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
+                  tmpindexa = (new_m - 1) * atmp + index * 2;
+                  tmpindexa2 = (new_m - 1) * atmp + (aMeta[new_m] - 1) * 2;
+                  active[tmpindexa] = active[tmpindexa2];
+                  active[tmpindexa + 1] = active[tmpindexa2 + 1];
+                  latt[active[tmpindexa] * lattsize2 * 3 + active[tmpindexa + 1] * 3 + 2] = index;
+                  tmpindex = new_i * lattsize2 * 3 + new_j * 3;
+                  latt[tmpindex + 1] = 0;
+                  latt[tmpindex + 2] = atmp;
+                  --aMeta[0];
+                  --aMeta[new_m];
+                }
+              }
+            } else
+            {
+              //if current site is in the active list, check if it *should* be in the active list
+              if (new_m == ta && new_m == tb && new_m == tc && new_m == td && new_m == te && new_m == tf)
+              {
+                //if current site should not be in active list anymore (has same identity as all its neihbors), remove it
+                tmpindexa = (new_m - 1) * atmp + index * 2;
+                tmpindexa2 = (new_m - 1) * atmp + (aMeta[new_m] - 1) * 2;
+                active[tmpindexa] = active[tmpindexa2];
+                active[tmpindexa + 1] = active[tmpindexa2 + 1];
+                latt[active[tmpindexa] * lattsize2 * 3 + active[tmpindexa + 1] * 3 + 2] = index;
+                tmpindex = new_i * lattsize2 * 3 + new_j * 3;
+                latt[tmpindex + 1] = 0;
+                latt[tmpindex + 2] = atmp;
+                --aMeta[0];
+                --aMeta[new_m];
+              }
             }
           }
           else if (in_active == 0)
