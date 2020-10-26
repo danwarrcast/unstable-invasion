@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
           int m = latt[tmpindex2];
           if (k == left || k == left + 1 || k == right || k == right + 1)
           {
-            int tmpindexa = (m - 1) * atmp + aMeta[m] * 2;
+            int tmpindexa = (m - 1) * atmp + aMeta[m] * 3;
             active[tmpindexa] = i;
             active[tmpindexa + 1] = j;
             active[tmpindexa + 2] = k;
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
         latt[tmpindex] = winner;
 
         //add this site to the active list
-        tmpindexa = (winner - 1) * atmp + aMeta[winner] * 2;
+        tmpindexa = (winner - 1) * atmp + aMeta[winner] * 3;
         active[tmpindexa] = i_rand;
         active[tmpindexa + 1] = j_rand;
 
@@ -405,8 +405,8 @@ int main(int argc, char *argv[])
         latt[tmpindex + 2] = aMeta[winner];
 
         //remove the updated site from its old active list
-        tmpindexa = (g - 1) * atmp + chosenIndex * 2;
-        int tmpindexa2 = (g - 1) * atmp + (aMeta[g] - 1) * 2;
+        tmpindexa = (g - 1) * atmp + chosenIndex * 3;
+        int tmpindexa2 = (g - 1) * atmp + (aMeta[g] - 1) * 3;
         active[tmpindexa] = active[tmpindexa2];
         active[tmpindexa + 1] = active[tmpindexa2 + 1];
         active[tmpindexa + 2] = active[tmpindexa2 + 2];
