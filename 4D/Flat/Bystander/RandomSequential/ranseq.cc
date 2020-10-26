@@ -507,7 +507,7 @@ int main(int argc, char *argv[])
             {
               if (latt[tmpindex2 + k * 3] > 1)
               {
-                Lmax = j;
+                Lmax = k;
                 break;
               }
             }
@@ -515,7 +515,7 @@ int main(int argc, char *argv[])
             {
               if (latt[tmpindex2 + k * 3] > 1)
               {
-                Rmax = j;
+                Rmax = k;
                 break;
               }
             }
@@ -524,12 +524,12 @@ int main(int argc, char *argv[])
             std::vector<int> Rmatches;
             //Find all green cells (M = 1) within the range Lmax < j < Rmax and add these cells to the vector Lmatches or Rmatches
             //depending on which side of the lattice the green cell is on
-            for (int j = Lmax; j < Rmax; j++)
+            for (int k = Lmax; k < Rmax; ++k)
             {
-              if (latt[tmpindex + j * 3] == 1 && j < lattsize2 / 2)
-                Lmatches.push_back(j);
-              if (latt[tmpindex + j * 3] == 1 && j > lattsize2 / 2)
-                Rmatches.push_back(j);
+              if (latt[tmpindex2 + k * 3] == 1 && k < lattsize2 / 2)
+                Lmatches.push_back(k);
+              if (latt[tmpindex2 + k * 3] == 1 && k > lattsize2 / 2)
+                Rmatches.push_back(k);
             }
 
             double Lavg = 0, Ravg = 0;
@@ -668,7 +668,7 @@ int main(int argc, char *argv[])
       for (int l = 0; l < lattsize; l++)
       {
         int currindex = currindexk + l * 6;
-        outstats << "0," << nogen2 << "," << k << "," << results[currindex + 0]
+        outstats << "0," << nogen2 << "," << k << "," << l << "," << results[currindex + 0]
                  << "," << results[currindex + 1]
                  << "," << results[currindex + 2]
                  << "," << results[currindex + 3]
