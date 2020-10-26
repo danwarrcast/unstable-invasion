@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
     for (int j = 0; j <= nogen2; j++)
     {
       for (int k = 0; k < 3; k++)
-        w_avgs[j * 3 + k] += (avgs2[i * ng2x6 * + j * 6 + (2 * k)] + avgs2[i * ng2x6 + j * 6 + (2 * k + 1)]) / 2.0 / (double)numruns;
+        w_avgs[j * 3 + k] += (avgs2[i * ng2x6 + j * 6 + (2 * k)] + avgs2[i * ng2x6 + j * 6 + (2 * k + 1)]) / 2.0 / (double)numruns;
     }
   }
 
