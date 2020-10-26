@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
       }
 
       if (aMeta[0] != aMeta[1] + aMeta[2] + aMeta[3])
-        cout << "Something wrong with aMeta: (" << aMeta[0] << "," << aMeta[1] << "," << aMeta[2] << "," << aMeta[3] << ")" << endl;
+        cout << "t = " << t << ": Something wrong with aMeta: (" << aMeta[0] << "," << aMeta[1] << "," << aMeta[2] << "," << aMeta[3] << ")" << endl;
 
       //choose a random lattice site to update from the list of active sites
       rannum1 = dis(generator);
