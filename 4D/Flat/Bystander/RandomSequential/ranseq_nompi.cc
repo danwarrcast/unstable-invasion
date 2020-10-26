@@ -585,9 +585,10 @@ int main(int argc, char *argv[])
   active.clear();
   vector<int>().swap(active);
 
-  vector<vector<vector<double>>> avgs(numruns, vector<vector<double>>(nogen2 + 1, vector<double>(6)));
-  vector<vector<vector<double>>> avgs2(numruns, vector<vector<double>>(nogen2 + 1, vector<double>(6)));
+  vector<double> avgs(numruns * (nogen2 + 1) * 6);
+  vector<double> avgs2(numruns * (nogen2 + 1) * 6);
 
+  int ng2x6 = (nogen2 + 1) * 6;
   for (int i = 0; i < numruns; i++)
   {
     int currindexq = i * (nogen2 + 1) * lattsize * lattsize * 6;
@@ -602,7 +603,7 @@ int main(int argc, char *argv[])
           int currindex = currindexk + l * 6;
           for (int s = 0; s < 6; ++s)
           {
-            avgs[i][j][s] += results[currindex + s] / (double)lattsize / (double)lattsize;
+            avgs[i * ng2x6 + j * 6 + s] += results[currindex + s] / (double)lattsize / (double)lattsize;
           }
         }
       }
@@ -622,7 +623,7 @@ int main(int argc, char *argv[])
           int currindex = currindexk + l * 6;
           for (int s = 0; s < 6; ++s)
           {
-            avgs2[i][j][s] += pow(avgs[i][j][s] - results[currindex + s], 2) / (double)lattsize / (double)lattsize;
+            avgs2[i * ng2x6 + j * 6 + s] += pow(avgs[i * ng2x6 + j * 6 + s] - results[currindex + s], 2) / (double)lattsize / (double)lattsize;
           }
         }
       }
@@ -630,7 +631,7 @@ int main(int argc, char *argv[])
   }
 
   avgs.clear();
-  vector<vector<vector<double>>>().swap(avgs);
+  vector<double>().swap(avgs);
 
   //only print results vector for run q = 0, t2 = nogen2
   int currindext2 = nogen2 * lattsize * lattsize * 6;
@@ -661,7 +662,7 @@ int main(int argc, char *argv[])
     for (int j = 0; j <= nogen2; j++)
     {
       for (int k = 0; k < 3; k++)
-        w_avgs[j * 3 + k] += (avgs2[i][j][2 * k] + avgs2[i][j][2 * k + 1]) / 2.0 / (double)numruns;
+        w_avgs[j * 3 + k] += (avgs2[i * ng2x6 * j * 6 + (2 * k)] + avgs2[i * ng2x6 * j * 6 + (2 * k + 1)]) / 2.0 / (double)numruns;
     }
   }
   for (int i = 0; i <= nogen2; i++)
