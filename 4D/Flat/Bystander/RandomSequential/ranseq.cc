@@ -426,7 +426,7 @@ int main(int argc, char *argv[])
                {i_rand, byindex, k_rand, c},
                {i_rand, fyindex, k_rand, d},
                {i_rand, j_rand, uzindex, e},
-               {j_rand, j_rand, dzindex, f},
+               {i_rand, j_rand, dzindex, f},
                {i_rand, j_rand, k_rand, winner}};
         for (auto &vec : tmp)
         {
