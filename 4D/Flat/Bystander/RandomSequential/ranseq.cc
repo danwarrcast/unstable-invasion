@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
       int uzindex = mod(k_rand + 1, lattsize2);
       int dzindex = mod(k_rand - 1, lattsize2);
       //find neighbors of the chosen site if j-index is even
-      int lsxls2x3 = lsxls2x3;
+      int lsxls2x3 = lattsize * lattsize2 * 3;
       int ls2x3 = lattsize2 * 3;
       a = latt[lxindex * lsxls2x3 + j_rand * ls2x3 + k_rand * 3];
       b = latt[rxindex * lsxls2x3 + j_rand * ls2x3 + k_rand * 3];
