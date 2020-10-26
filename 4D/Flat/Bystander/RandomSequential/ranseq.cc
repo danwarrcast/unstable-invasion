@@ -294,22 +294,22 @@ int main(int argc, char *argv[])
         for (int k = 0; k < lattsize2; k++)
         {
           int tmpindex3 = tmpindex2 + k * 3;
-          latt[tmpindex2] = 1;
-          latt[tmpindex2 + 1] = 0;
-          latt[tmpindex2 + 2] = 0;
+          latt[tmpindex3] = 1;
+          latt[tmpindex3 + 1] = 0;
+          latt[tmpindex3 + 2] = 0;
           if (k > left && k <= right)
           {
-            latt[tmpindex2] = 2;
+            latt[tmpindex3] = 2;
           }
-          int m = latt[tmpindex2];
+          int m = latt[tmpindex3];
           if (k == left || k == left + 1 || k == right || k == right + 1)
           {
             int tmpindexa = (m - 1) * atmp + aMeta[m] * 3;
             active[tmpindexa] = i;
             active[tmpindexa + 1] = j;
             active[tmpindexa + 2] = k;
-            latt[tmpindex2 + 1] = 1;
-            latt[tmpindex2 + 2] = aMeta[m];
+            latt[tmpindex3 + 1] = 1;
+            latt[tmpindex3 + 2] = aMeta[m];
             aMeta[0]++;
             aMeta[m]++;
           }
