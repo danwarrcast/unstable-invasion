@@ -400,6 +400,7 @@ int main(int argc, char *argv[])
         tmpindexa = (winner - 1) * atmp + aMeta[winner] * 3;
         active[tmpindexa] = i_rand;
         active[tmpindexa + 1] = j_rand;
+        active[tmpindexa + 1] = k_rand;
 
         //tell lattice where to find its new location in the active lisr
         latt[tmpindex + 2] = aMeta[winner];
