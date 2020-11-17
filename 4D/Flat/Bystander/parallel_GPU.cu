@@ -2,7 +2,7 @@
 #include <math.h>
 
 __global__
-void (int n, float *x, float *y)
+void add(int n, float *x, float *y)
 {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -28,7 +28,8 @@ int main(void)
 
     int blockSize = 256;
     int numBlocks = (N + blockSize - 1) / blockSize;
-    add<<numBlocks, blockSize>>(N, x, y);
+    //add<<<numBlocks, blockSize>>>(N, x, y);
+    add<<<1, 1>>>(N, x, y);
 
     cudaDeviceSynchronize();
 
@@ -38,7 +39,7 @@ int main(void)
         maxError = fmax(maxError, fabs(y[i]-3.0f));
     }
 
-    std:cout << "Max error: " << maxError << std::endl;
+    std::cout << "Max error: " << maxError << std::endl;
 
     cudaFree(x);
     cudaFree(y);

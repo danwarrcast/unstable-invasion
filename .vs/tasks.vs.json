@@ -1,0 +1,10 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskLabel": "task-parallel_GPU",
+      "appliesTo": "4D/Flat/Bystander/parallel_GPU.cu",
+      "type": "launch"
+    }
+  ]
+}
