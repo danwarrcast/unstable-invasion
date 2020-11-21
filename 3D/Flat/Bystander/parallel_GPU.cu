@@ -10,8 +10,8 @@ void setup_kernel(curandState *state, int N, unsigned long SEED)
     int stride = gridDim.x * blockDim.x;
 
     // Init Random vector
-    for (i = idx; i < N; i += stride)
-	    curand_init(SEED + i, 0, 0, &state[i]);
+    for (i = idx; i < N; i += stride;
+        curand_init(SEED + i, 0, 0, &state[i]);
 
 }
 
@@ -323,5 +323,5 @@ int main(int argc, char* argv[])
         cudaFree(lattup);
         cudaFree(devStates);
         return (int)cudaStatus
-        
+
 }
