@@ -1,7 +1,19 @@
 #include <iostream>
-#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <math.h>
 #include <curand_kernel.h>
+#include <algorithm>
+
+bool to_bool(std::string str)
+{
+    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+    std::istringstream is(str);
+    bool b;
+    is >> std::boolalpha >> b;
+    return b;
+}
 
 __global__
 void setup_kernel(curandState *state, int N, unsigned long SEED) 
@@ -11,26 +23,28 @@ void setup_kernel(curandState *state, int N, unsigned long SEED)
 
     // Init Random vector
     for (i = idx; i < N; i += stride)
-	    curand_init(SEED + i, 0, 0, &state[i]);
+    {
+        curand_init(SEED + i, 0, 0, &state[i]);
+    }
 
 }
 
 __device__
-winstrain(int a, int b, int c, double s1, double s3, double rannum)
+int winstrain(int a, int b, int c, double s1, double s3, double rannum)
 {
     double g_a = 1.0 - s3*(double)(a-1)*(double)(a-2)/2.0 - s1*(double)(2-a)*(double)(3-a)/2.0;
     double g_b = 1.0 - s3*(double)(b-1)*(double)(b-2)/2.0 - s1*(double)(2-b)*(double)(3-b)/2.0;
     double g_c = 1.0 - s3*(double)(c-1)*(double)(c-2)/2.0 - s1*(double)(2-c)*(double)(3-c)/2.0;
   
-    vector< vector< double > > vec = {{g_a/(g_a+g_b+g_c),double(a)}, {g_b/(g_a+g_b+g_c),double(b)}, {g_c/(g_a+g_b+g_c),double(c)}};
+    double vec[6] = {g_a/(g_a+g_b+g_c), double(a), g_b/(g_a+g_b+g_c), double(b), g_c/(g_a+g_b+g_c), double(c)};
   
     double G = 0.0;
     double result;
   
     for (int s = 0; s < 3; s++) {
-      G += vec[s][0];
+      G += vec[2*s];
       if (G > rannum) {
-        result = int(vec[s][1]);
+        result = (int)vec[2*s + 1];
         break;
       }
     }
@@ -39,7 +53,7 @@ winstrain(int a, int b, int c, double s1, double s3, double rannum)
 }
 
 __global__
-update_odd(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, curandState *state)
+void update_odd(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, double mu, curandState *state)
 {
     curandState localState;
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -50,7 +64,7 @@ update_odd(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, curan
         int y = index / L;
 
         int yp = y<L2-1?y+1:0;
-        int ym = y>0?y-1:L2-1;
+        //int ym = y>0?y-1:L2-1; not used in odd updates
         int xp = x<L-1?x+1:0;
         int xm = x>0?x-1:L-1;
 
@@ -91,7 +105,7 @@ update_odd(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, curan
 }
 
 __global__
-update_even(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, curandState *state)
+void update_even(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, double mu, curandState *state)
 {
     curandState localState;
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -101,7 +115,7 @@ update_even(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, cura
         int x = index % L;
         int y = index / L;
 
-        int yp = y<L2-1?y+1:0;
+        //int yp = y<L2-1?y+1:0; not used in even updates
         int ym = y>0?y-1:L2-1;
         int xp = x<L-1?x+1:0;
         int xm = x>0?x-1:L-1;
@@ -144,17 +158,34 @@ update_even(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3, cura
 
 int main(int argc, char* argv[])
 {
+    cudaError_t cudaStatus;
+
     int lattsize, lattsize2, nogen, numruns;
     double mu, s1, s3;
+    bool image;
 
     lattsize = atoi(argv[1]);
     lattsize2 = lattsize * 4;
-    s1 = atof(argv[2]);
-    s3 = s1 - atof(argv[3]);
+    s3 = atof(argv[2]);
+    s1 = s3 - atof(argv[3]);
     mu = atof(argv[4]);
     nogen = atoi(argv[5]);
     numruns = atoi(argv[6]);
     image = false;
+
+    int N = lattsize * lattsize2;
+    int *lattdown;
+    int *lattup;
+    curandState* devStates;
+
+    int left = lattsize2 / 2 - lattsize / 4;
+    int right = lattsize2 / 2 + lattsize / 4;
+
+    int nogen2 = floor(log2(nogen));
+    nogen = pow(2, nogen2);
+
+    int blockSize = 256;
+    int numBlocks = (N + blockSize - 1) / blockSize;
 
     if (argc == 8 && to_bool(argv[7]))
     {
@@ -165,14 +196,14 @@ int main(int argc, char* argv[])
       image = false;
     }
 
-    string statsfilename;  
-    ofstream outstats;
-    ofstream outstats2;
-    ofstream outstats3;
-    ifstream testoutstats;
+    std::string statsfilename;  
+    std::ofstream outstats;
+    std::ofstream outstats2;
+    std::ofstream outstats3;
+    std::ifstream testoutstats;
     int filecounter=0;
-    string tempstr;
-    ostringstream tempstring;	
+    std::string tempstr;
+    std::ostringstream tempstring;	
 
     tempstring << filecounter;
 
@@ -195,23 +226,16 @@ int main(int argc, char* argv[])
       testoutstats.close();
     }
 
-    testoutstats.clear(ios::failbit);
+    testoutstats.clear(std::ios::failbit);
     outstats.open(statsfilename.c_str());
 
-    cout << statsfilename.c_str() << endl;
+    std::cout << statsfilename.c_str() << std::endl;
 
-    cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
-    cout << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
+    std::cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << std::endl;
+    std::cout << " # sW = " << s3 << " b = " << s3 - s1 << " mu = " << mu << std::endl;
 
-    outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << endl;
-    outstats << " # sW = " << sW << " b = " << sW - sG << " mu = " << mu << endl;
-
-    int N = lattsize * lattsize2;
-    float *lattdown;
-    float *lattup;
-    curandState* devStates;
-
-    cudaError_t cudaStatus;
+    outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << std::endl;
+    outstats << " # sW = " << s3 << " b = " << s3 - s1 << " mu = " << mu << std::endl;
 
     cudaStatus = cudaMallocManaged(&lattdown, N * sizeof(int));
     if (cudaStatus != cudaSuccess) {
@@ -229,16 +253,12 @@ int main(int argc, char* argv[])
         goto Error;
     }
 
-    int left = lattsize2 / 2 - lattsize / 4;
-    int right = lattsize2 / 2 + lattsize / 4;
-
-    int nogen2 = floor(log2(nogen));
-    nogen = pow(2, nogen2);
-
-    int blockSize = 256;
-    int numBlocks = (N + blockSize - 1) / blockSize
-
     setup_kernel <<<numBlocks, blockSize>>> (devStates, N, time(0));
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching setup_kernel!\n", cudaStatus);
+        goto Error;
+    }
 
     for (int q = 0; q < numruns; q++)
     {
@@ -248,7 +268,7 @@ int main(int argc, char* argv[])
             lattdown[i] = 1;
             lattup[i] = 0;
             int j = i / lattsize;
-            if (j > left && <= right) lattdown[i] = 2;
+            if (j > left && j <= right) lattdown[i] = 2;
         }
 
         int t2 = 0;
@@ -265,7 +285,7 @@ int main(int argc, char* argv[])
             }
 
             //even step
-            update_odd <<<numBlocks, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, devStates);
+            update_odd <<<numBlocks, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, mu, devStates);
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_odd!\n", cudaStatus);
@@ -284,8 +304,8 @@ int main(int argc, char* argv[])
             }
 
             //odd step
-            update_even <<<numBlocks, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, devStates);
-            cudaStats = cudaDeviceSynchronize();
+            update_even <<<numBlocks, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, mu, devStates);
+            cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_even!\n", cudaStatus);
                 goto Error;
@@ -295,20 +315,22 @@ int main(int argc, char* argv[])
         }
     }
 
-    int *lattup_host[N];
+    int *lattup_host;
+    lattup_host = new int[N];
     cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
 
     if (image)
     {
         for (int i = 0; i < N; i++)
         {
+            if (lattup_host[i] == 1) continue;
             int x = i % lattsize;
             int y = i / lattsize;
             double xx = (double)x - 0.5 * (y % 2);
             double yy = (double)y * sqrt(3.0)/2.0;
             outstats << xx << "," << yy << "," << lattup_host[i] << "\n";
         }
-        outstats << endl;
+        outstats << std::endl;
     }
     
     outstats.close();
@@ -322,6 +344,6 @@ int main(int argc, char* argv[])
         cudaFree(lattdown);
         cudaFree(lattup);
         cudaFree(devStates);
-        return (int)cudaStatus
+        return (int)cudaStatus;
         
 }
