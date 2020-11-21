@@ -304,7 +304,7 @@ int main(int argc, char* argv[])
             }
 
             //odd step
-            update_even <<<numBlocks, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, mu, devStates);
+            update_even <<<numBlocks, blockSize>>> (N, lattup, lattdown, lattsize, lattsize2, s1, s3, mu, devStates);
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_even!\n", cudaStatus);
