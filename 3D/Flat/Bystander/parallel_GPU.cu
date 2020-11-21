@@ -15,6 +15,19 @@ bool to_bool(std::string str)
     return b;
 }
 
+void print_image(int *latt_host, int N, int lattsize, std::ofstream &outfile)
+{
+    for (int i = 0; i < N; i++)
+    {
+        if (latt_host[i] == 1) continue;
+        int x = i % lattsize;
+        int y = i / lattsize;
+        double xx = (double)x - 0.5 * (y % 2);
+        double yy = (double)y * sqrt(3.0)/2.0;
+        outfile << xx << "," << yy << "," << latt_host[i] << "\n";
+    }
+}
+
 __global__
 void setup_kernel(curandState *state, int N, unsigned long SEED) 
 {        
@@ -319,24 +332,13 @@ int main(int argc, char* argv[])
     lattup_host = new int[N];
     cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
 
-    if (image)
-    {
-        for (int i = 0; i < N; i++)
-        {
-            if (lattup_host[i] == 1) continue;
-            int x = i % lattsize;
-            int y = i / lattsize;
-            double xx = (double)x - 0.5 * (y % 2);
-            double yy = (double)y * sqrt(3.0)/2.0;
-            outstats << xx << "," << yy << "," << lattup_host[i] << "\n";
-        }
-        outstats << std::endl;
-    }
+    if (image) print_image(lattup_host, N, lattsize, outstats);
     
     outstats.close();
 
     cudaFree(lattdown);
     cudaFree(lattup);
+    cudaFree(devStates);
 
     return 0;
 
