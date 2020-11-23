@@ -169,6 +169,29 @@ void update_even(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3,
     }
 }
 
+__global__
+void find_heights(int L, int L2, int *latt, float *h)
+{
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;
+    float L_havg = 0.0, R_havg = 0.0;
+    for (int i = index; i < L; i += stride)
+    {
+        int Lmax = 0, Rmax = 0;
+        int x = index;
+        for (int j = 0; j < L2; ++j)
+        {
+            if (latt[j * L + x] > 1) { Lmax = j; break; }
+        }
+        for (int j = L2 - 1; j >= 0; --j)
+        {
+            if (latt[j * L + x] > 1) { Rmax = j + 1; break; }
+        }
+        h[index] = (float)Lmax;
+        h[lattsize * index] = (float)Rmax;
+    } 
+}
+
 int main(int argc, char* argv[])
 {
     cudaError_t cudaStatus;
@@ -190,15 +213,22 @@ int main(int argc, char* argv[])
     int *lattdown;
     int *lattup;
     curandState* devStates;
-
+    float *heights;
+    float *h_heights;
+    h_heights = new float[2 * lattsize];
+    
     int left = lattsize2 / 2 - lattsize / 4;
     int right = lattsize2 / 2 + lattsize / 4;
 
     int nogen2 = floor(log2(nogen));
     nogen = pow(2, nogen2);
 
+    float *widths;
+    widths = new float[nogen2 + 1];
+
     int blockSize = 256;
-    int numBlocks = (N + blockSize - 1) / blockSize;
+    int numBlocksN = (N + blockSize - 1) / blockSize;
+    int numBlocksL = (lattsize + blockSize - 1) / blockSize;
 
     if (argc == 8 && to_bool(argv[7]))
     {
@@ -260,6 +290,11 @@ int main(int argc, char* argv[])
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
+    cudaStatus = cudaMalloc(&heights, 2 * lattsize * sizeof(float));
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+        goto Error;
+    }
     cudaStatus = cudaMalloc(&devStates, N * sizeof(curandState));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
@@ -298,14 +333,36 @@ int main(int argc, char* argv[])
             }
 
             //even step
-            update_odd <<<numBlocks, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, mu, devStates);
+            update_odd <<<numBlocksN, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, mu, devStates);
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_odd!\n", cudaStatus);
                 goto Error;
             }
 
-            //if (pow_2) find_width();
+            if (pow_2)
+            {
+                find_heights<<<numBlocksL, blockSize>>>(lattsize, lattsize2, lattup, heights);
+                cudaStatus = cudaDeviceSynchronize();
+                if (cudaStatus != cudaSuccess) {
+                    fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_odd!\n", cudaStatus);
+                    goto Error;
+                }
+                cudaMemcpy(h_heights, heights, lattsize * sizeof(float), cudaMemcpyDeviceToHost);
+                float h_avgL = 0.0, h_avgR = 0.0;
+                for (int i = 0; i < lattsize; ++i)
+                {
+                    h_avgL += h_heights[i] / (float)lattsize;
+                    h_avgR += h_heights[lattsize + i] / (float)lattsize;
+                }
+                float w_avgL = 0.0, w_avgR = 0.0;
+                for (int i = 0; i < lattsize; ++i)i
+                {
+                    w_avgL += pow(h_avgL - h_heights[i],2) / (float)lattsize;
+                    w_avgR += pow(h_avgR - h_heights[lattsize + i],2) / (float)lattsize;
+                }
+                widths[t2] += (w_avgL + w_avgR) / 2.0 / (float)numruns;
+            }
 
             ++t;
             if (t == count) {
@@ -317,14 +374,36 @@ int main(int argc, char* argv[])
             }
 
             //odd step
-            update_even <<<numBlocks, blockSize>>> (N, lattup, lattdown, lattsize, lattsize2, s1, s3, mu, devStates);
+            update_even <<<numBlocksN, blockSize>>> (N, lattup, lattdown, lattsize, lattsize2, s1, s3, mu, devStates);
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_even!\n", cudaStatus);
                 goto Error;
             }
 
-            //if (pow_2) find_width();
+            if (pow_2)
+            {
+                find_heights<<<numBlocksL, blockSize>>>(lattsize, lattsize2, lattdown, heights);
+                cudaStatus = cudaDeviceSynchronize();
+                if (cudaStatus != cudaSuccess) {
+                    fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching update_odd!\n", cudaStatus);
+                    goto Error;
+                }
+                cudaMemcpy(h_heights, heights, lattsize * sizeof(float), cudaMemcpyDeviceToHost);
+                float h_avgL = 0.0, h_avgR = 0.0;
+                for (int i = 0; i < lattsize; ++i)
+                {
+                    h_avgL += h_heights[i] / (float)lattsize;
+                    h_avgR += h_heights[lattsize + i] / (float)lattsize;
+                }
+                float w_avgL = 0.0, w_avgR = 0.0;
+                for (int i = 0; i < lattsize; ++i)i
+                {
+                    w_avgL += pow(h_avgL - h_heights[i],2) / (float)lattsize;
+                    w_avgR += pow(h_avgR - h_heights[lattsize + i],2) / (float)lattsize;
+                }
+                widths[t2] += (w_avgL + w_avgR) / 2.0 / (float)numruns;
+            }
         }
     }
 
@@ -332,8 +411,13 @@ int main(int argc, char* argv[])
     lattup_host = new int[N];
     cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
 
-    if (image) print_image(lattup_host, N, lattsize, outstats);
+    //if (image) print_image(lattup_host, N, lattsize, outstats);
     
+    for (int i = 0; i <= nogen2; ++i)
+    {
+        outstats << pow(2,i) << "," << sqrt(widths[i]) << "\n";
+    }
+
     outstats.close();
 
     cudaFree(lattdown);
