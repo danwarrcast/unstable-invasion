@@ -174,7 +174,6 @@ void find_heights(int L, int L2, int *latt, float *h)
 {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
-    float L_havg = 0.0, R_havg = 0.0;
     for (int i = index; i < L; i += stride)
     {
         int Lmax = 0, Rmax = 0;
@@ -188,7 +187,7 @@ void find_heights(int L, int L2, int *latt, float *h)
             if (latt[j * L + x] > 1) { Rmax = j + 1; break; }
         }
         h[index] = (float)Lmax;
-        h[lattsize * index] = (float)Rmax;
+        h[L * index] = (float)Rmax;
     } 
 }
 
@@ -301,7 +300,7 @@ int main(int argc, char* argv[])
         goto Error;
     }
 
-    setup_kernel <<<numBlocks, blockSize>>> (devStates, N, time(0));
+    setup_kernel <<<numBlocksN, blockSize>>> (devStates, N, time(0));
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching setup_kernel!\n", cudaStatus);
@@ -356,7 +355,7 @@ int main(int argc, char* argv[])
                     h_avgR += h_heights[lattsize + i] / (float)lattsize;
                 }
                 float w_avgL = 0.0, w_avgR = 0.0;
-                for (int i = 0; i < lattsize; ++i)i
+                for (int i = 0; i < lattsize; ++i)
                 {
                     w_avgL += pow(h_avgL - h_heights[i],2) / (float)lattsize;
                     w_avgR += pow(h_avgR - h_heights[lattsize + i],2) / (float)lattsize;
@@ -397,7 +396,7 @@ int main(int argc, char* argv[])
                     h_avgR += h_heights[lattsize + i] / (float)lattsize;
                 }
                 float w_avgL = 0.0, w_avgR = 0.0;
-                for (int i = 0; i < lattsize; ++i)i
+                for (int i = 0; i < lattsize; ++i)
                 {
                     w_avgL += pow(h_avgL - h_heights[i],2) / (float)lattsize;
                     w_avgR += pow(h_avgR - h_heights[lattsize + i],2) / (float)lattsize;
