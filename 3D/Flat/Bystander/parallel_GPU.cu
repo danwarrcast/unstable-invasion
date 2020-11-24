@@ -406,9 +406,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    int *lattup_host;
-    lattup_host = new int[N];
-    cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
+    //int *lattup_host;
+    //lattup_host = new int[N];
+    //cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
 
     //if (image) print_image(lattup_host, N, lattsize, outstats);
     
@@ -421,6 +421,7 @@ int main(int argc, char* argv[])
 
     cudaFree(lattdown);
     cudaFree(lattup);
+    cudaFree(heights);
     cudaFree(devStates);
 
     return 0;
@@ -428,6 +429,7 @@ int main(int argc, char* argv[])
     Error:
         cudaFree(lattdown);
         cudaFree(lattup);
+        cudaFree(heights);
         cudaFree(devStates);
         return (int)cudaStatus;
         
