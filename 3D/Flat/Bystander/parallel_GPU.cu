@@ -170,7 +170,7 @@ void update_even(int N, int *l_d, int *l_u, int L, int L2, double s1, double s3,
 }
 
 __global__
-void find_heights(int L, int L2, int *latt, float *h)
+void find_heights(int L, int L2, int *latt, float *hlist)
 {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -186,8 +186,8 @@ void find_heights(int L, int L2, int *latt, float *h)
         {
             if (latt[j * L + x] > 1) { Rmax = j + 1; break; }
         }
-        h[index] = (float)Lmax;
-        h[L * index] = (float)Rmax;
+        hlist[index] = (float)Lmax;
+        hlist[L + index] = (float)Rmax;
     } 
 }
 
@@ -273,10 +273,19 @@ int main(int argc, char* argv[])
 
     std::cout << statsfilename.c_str() << std::endl;
 
-    std::cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << std::endl;
+    statsfilename = "diffusion_out/image_run";
+    statsfilename += tempstring.str();
+
+    outstats2.open(statsfilename.c_str());
+
+    std::cout << statsfilename.c_str() << std::endl;
+
+    std::string image_str = (image == true) ? "True" : "False";
+
+    std::cout << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image_str << std::endl;
     std::cout << " # sW = " << s3 << " b = " << s3 - s1 << " mu = " << mu << std::endl;
 
-    outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image << std::endl;
+    outstats << "# Lx: " << lattsize << " Lt: " << nogen << " N_runs: " << numruns << " Has_Image: " << image_str << std::endl;
     outstats << " # sW = " << s3 << " b = " << s3 - s1 << " mu = " << mu << std::endl;
 
     cudaStatus = cudaMallocManaged(&lattdown, N * sizeof(int));
@@ -331,7 +340,7 @@ int main(int argc, char* argv[])
                 pow_2 = false;
             }
 
-            //even step
+            //odd step
             update_odd <<<numBlocksN, blockSize>>> (N, lattdown, lattup, lattsize, lattsize2, s1, s3, mu, devStates);
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
@@ -348,19 +357,19 @@ int main(int argc, char* argv[])
                     goto Error;
                 }
                 cudaMemcpy(h_heights, heights, lattsize * sizeof(float), cudaMemcpyDeviceToHost);
-                float h_avgL = 0.0, h_avgR = 0.0;
+                float height_avgL = 0.0f, height_avgR = 0.0f;
                 for (int i = 0; i < lattsize; ++i)
                 {
-                    h_avgL += h_heights[i] / (float)lattsize;
-                    h_avgR += h_heights[lattsize + i] / (float)lattsize;
+                    height_avgL += h_heights[i] / (float)lattsize;
+                    height_avgR += h_heights[lattsize + i] / (float)lattsize;
                 }
-                float w_avgL = 0.0, w_avgR = 0.0;
+                float width_avgL = 0.0f, width_avgR = 0.0f;
                 for (int i = 0; i < lattsize; ++i)
                 {
-                    w_avgL += pow(h_avgL - h_heights[i],2) / (float)lattsize;
-                    w_avgR += pow(h_avgR - h_heights[lattsize + i],2) / (float)lattsize;
+                    width_avgL += pow(height_avgL - h_heights[i], 2.0f) / (float)lattsize;
+                    width_avgR += pow(height_avgR - h_heights[lattsize + i], 2.0f) / (float)lattsize;
                 }
-                widths[t2] += (w_avgL + w_avgR) / 2.0 / (float)numruns;
+                widths[t2] += (width_avgL + width_avgR) / 2.0f / (float)numruns;
             }
 
             ++t;
@@ -372,7 +381,7 @@ int main(int argc, char* argv[])
                 pow_2 = false;
             }
 
-            //odd step
+            //even step
             update_even <<<numBlocksN, blockSize>>> (N, lattup, lattdown, lattsize, lattsize2, s1, s3, mu, devStates);
             cudaStatus = cudaDeviceSynchronize();
             if (cudaStatus != cudaSuccess) {
@@ -389,28 +398,28 @@ int main(int argc, char* argv[])
                     goto Error;
                 }
                 cudaMemcpy(h_heights, heights, lattsize * sizeof(float), cudaMemcpyDeviceToHost);
-                float h_avgL = 0.0, h_avgR = 0.0;
+                float height_avgL = 0.0f, height_avgR = 0.0f;
                 for (int i = 0; i < lattsize; ++i)
                 {
-                    h_avgL += h_heights[i] / (float)lattsize;
-                    h_avgR += h_heights[lattsize + i] / (float)lattsize;
+                    height_avgL += h_heights[i] / (float)lattsize;
+                    height_avgR += h_heights[lattsize + i] / (float)lattsize;
                 }
-                float w_avgL = 0.0, w_avgR = 0.0;
+                float width_avgL = 0.0f, width_avgR = 0.0f;
                 for (int i = 0; i < lattsize; ++i)
                 {
-                    w_avgL += pow(h_avgL - h_heights[i],2) / (float)lattsize;
-                    w_avgR += pow(h_avgR - h_heights[lattsize + i],2) / (float)lattsize;
+                    width_avgL += pow(height_avgL - h_heights[i], 2.0f) / (float)lattsize;
+                    width_avgR += pow(height_avgR - h_heights[lattsize + i], 2.0f) / (float)lattsize;
                 }
-                widths[t2] += (w_avgL + w_avgR) / 2.0 / (float)numruns;
+                widths[t2] += (width_avgL + width_avgR) / 2.0f / (float)numruns;
             }
         }
     }
 
-    //int *lattup_host;
-    //lattup_host = new int[N];
-    //cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
+    int *lattup_host;
+    lattup_host = new int[N];
+    cudaMemcpy(lattup_host, lattup, N * sizeof(int), cudaMemcpyDeviceToHost);
 
-    //if (image) print_image(lattup_host, N, lattsize, outstats);
+    if (image) print_image(lattup_host, N, lattsize, outstats2);
     
     for (int i = 0; i <= nogen2; ++i)
     {
